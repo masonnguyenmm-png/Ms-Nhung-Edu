@@ -6,12 +6,20 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Student, RewardItem, Invoice, DiaryPost, StudentStatus } from './types';
+import { Language, translations } from './translations';
+import {
+  initialStudents,
+  initialRewards,
+  initialInvoices,
+  initialDiaryPosts,
+} from './data/mockData';
 import ClassroomLayout from './components/ClassroomLayout';
 import AttendanceManager from './components/AttendanceManager';
 import ReportsAnalytics from './components/ReportsAnalytics';
 import StudentPortal from './components/StudentPortal';
 import TuitionTracker from './components/TuitionTracker';
 import RewardStore from './components/RewardStore';
+import ClassOverview from './components/ClassOverview';
 import {
   auth,
   signInWithGoogle,
@@ -45,59 +53,139 @@ import {
   MessageSquare,
   Search,
   BookOpen,
+  Database,
+  RefreshCw,
+  ArrowRight,
+  Lock,
+  X,
+  Check,
+  LogIn,
 } from 'lucide-react';
 
 export default function App() {
-  // Real-time Database state
-  const [students, setStudents] = useState<Student[]>([]);
-  const [rewards, setRewards] = useState<RewardItem[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [diaryPosts, setDiaryPosts] = useState<DiaryPost[]>([]);
+  // Real-time Database state with high-fidelity local memory fallbacks
+  const [students, setStudents] = useState<Student[]>(initialStudents);
+  const [rewards, setRewards] = useState<RewardItem[]>(initialRewards);
+  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [diaryPosts, setDiaryPosts] = useState<DiaryPost[]>(initialDiaryPosts);
+
+  // Custom states dedicated to Ms Nhung / Cô Nhung's Classroom
+  const [loveHearts, setLoveHearts] = useState<number>(() => {
+    const saved = localStorage.getItem('nhung_love_hearts');
+    return saved ? parseInt(saved, 10) : 128;
+  });
+
+  const [nhungMemo, setNhungMemo] = useState<string>(() => {
+    const saved = localStorage.getItem('nhung_memo_text');
+    return saved || 'Hãy luôn tự tin vào bản thân và nỗ lực hết mình các con nhé. Mỗi ngày đến lớp là một ngày chúng ta cùng nhau học tập và tỏa sáng! 🌟💖';
+  });
+
+  const handleUpdateMemo = (newMemo: string) => {
+    setNhungMemo(newMemo);
+    localStorage.setItem('nhung_memo_text', newMemo);
+  };
+
+  const handleAddHeart = () => {
+    const updated = loveHearts + 1;
+    setLoveHearts(updated);
+    localStorage.setItem('nhung_love_hearts', updated.toString());
+  };
 
   // Authentication State
   const [user, setUser] = useState<any | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Security Verification controls
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [isPinUnlocked, setIsPinUnlocked] = useState(() => {
+    return localStorage.getItem('edupulse_teacher_unlocked') === 'true';
+  });
+
+  const TEACHER_EMAILS = [
+    'mason.nguyen@academica.edu',
+    'teacher@example.com',
+    'masonnguyenmm@gmail.com',
+    'nhung.co@edupulse.edu.vn',
+    'conhung@gmail.com',
+    'nhungclassroom@gmail.com',
+    'nhung@edupulse.edu.vn'
+  ];
+
+  const isTeacherUser = !!(user && user.email && TEACHER_EMAILS.includes(user.email));
+
   // Active navigation logs
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'attendance' | 'reports' | 'rewards' | 'student-portal' | 'tuition'>('dashboard');
-  const [role, setRole] = useState<'instructor' | 'student'>('instructor');
+  const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'attendance' | 'reports' | 'rewards' | 'student-portal' | 'tuition'>('overview');
+  
+  // Persistent separation of student/instructor portals
+  const [role, setRoleState] = useState<'instructor' | 'student' | null>(() => {
+    const saved = localStorage.getItem('edupulse_role');
+    return (saved === 'instructor' || saved === 'student') ? saved : null;
+  });
+
+  const setRole = (newRole: 'instructor' | 'student' | null) => {
+    setRoleState(newRole);
+    if (newRole) {
+      localStorage.setItem('edupulse_role', newRole);
+    } else {
+      localStorage.removeItem('edupulse_role');
+      localStorage.removeItem('edupulse_teacher_unlocked');
+      setIsPinUnlocked(false);
+    }
+  };
+
+  // Persistent language choice (English & Vietnamese), defaulting to Vietnamese (vi)
+  const [lang, setLangState] = useState<Language>(() => {
+    const saved = localStorage.getItem('edupulse_lang');
+    return (saved === 'en' || saved === 'vi') ? saved : 'vi';
+  });
+
+  const toggleLanguage = (newLang: Language) => {
+    setLangState(newLang);
+    localStorage.setItem('edupulse_lang', newLang);
+  };
+
+  const t = (key: keyof typeof translations['en']) => {
+    return translations[lang]?.[key] || translations['en']?.[key] || key;
+  };
+
   const [selectedClass, setSelectedClass] = useState('Period 3: Biology');
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 1. Initial database bootstrapping and core real-time database listener channels
+  // 1. Core real-time database listener channels (no-flicker startup)
   useEffect(() => {
-    async function initDb() {
-      try {
-        await bootstrapDatabaseIfEmpty();
-      } catch (e) {
-        console.error('Error bootstrapping database on startup:', e);
-      }
-    }
-    initDb();
-
     // Subscribe to collections with realtime synchronization listeners
     const unsubStudents = subscribeToStudents((data) => {
-      // Sort database list so layout renders deterministically
-      const sorted = [...data].sort((a, b) => a.id.localeCompare(b.id));
-      setStudents(sorted);
+      if (data && data.length > 0) {
+        // Sort database list so layout renders deterministically
+        const sorted = [...data].sort((a, b) => a.id.localeCompare(b.id));
+        setStudents(sorted);
+      }
     });
 
     const unsubRewards = subscribeToRewards((data) => {
-      setRewards(data);
+      if (data && data.length > 0) {
+        setRewards(data);
+      }
     });
 
     const unsubInvoices = subscribeToInvoices((data) => {
-      // Format invoice identifiers back to human-legible if modified
-      const mapped = data.map(inv => ({
-        ...inv,
-        id: inv.id.replace('INV_', '#'),
-      }));
-      setInvoices(mapped);
+      if (data && data.length > 0) {
+        // Format invoice identifiers back to human-legible if modified
+        const mapped = data.map(inv => ({
+          ...inv,
+          id: inv.id.replace('INV_', '#'),
+        }));
+        setInvoices(mapped);
+      }
     });
 
     const unsubDiary = subscribeToDiaryPosts((data) => {
-      setDiaryPosts(data);
+      if (data && data.length > 0) {
+        setDiaryPosts(data);
+      }
     });
 
     return () => {
@@ -108,7 +196,7 @@ export default function App() {
     };
   }, []);
 
-  // 2. Authentication observer state machine
+  // 2. Authentication observer state machine + Admin Bootstrapper Trigger
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
@@ -133,7 +221,18 @@ export default function App() {
             console.log('[Firebase Auth Observer]: Synced real-time Student profile:', currentUser.uid);
           }
         } catch (error) {
-          console.warn('[Firebase Registration Profile failed]: This is expected if the user does not have write access yet or offline.');
+          console.warn('[Firebase Registration Profile failed]: Expected if user is not in students write flow yet.');
+        }
+
+        // Safe Admin-only Bootstrapping check
+        const isAdminEmail = currentUser.email && ['mason.nguyen@academica.edu', 'teacher@example.com', 'masonnguyenmm@gmail.com'].includes(currentUser.email);
+        if (isAdminEmail) {
+          console.log('[Firebase Auth Observer]: Admin detected. Running dynamic bootstrapping if empty...');
+          try {
+            await bootstrapDatabaseIfEmpty();
+          } catch (boostrapErr) {
+            console.error('[Firebase Auth Observer]: Bootstrapping empty collections failed:', boostrapErr);
+          }
         }
       }
     });
@@ -214,6 +313,195 @@ export default function App() {
     }
   };
 
+  const handleEnterInstructorPortal = () => {
+    // 1. If user is a verified teacher via Google Oauth automatically let them in
+    if (isTeacherUser) {
+      setRole('instructor');
+      setActiveTab('overview');
+      return;
+    }
+
+    // 2. Otherwise request PIN authentication or Teacher login
+    setPinInput('');
+    setPinError(null);
+    setShowVerifyModal(true);
+  };
+
+  const handleVerifyPin = () => {
+    if (pinInput === '2026' || pinInput.toLowerCase() === 'nhungteacher') {
+      localStorage.setItem('edupulse_teacher_unlocked', 'true');
+      setIsPinUnlocked(true);
+      setRole('instructor');
+      setActiveTab('overview');
+      setShowVerifyModal(false);
+      setPinError(null);
+    } else {
+      setPinError(t('invalidPin'));
+    }
+  };
+
+  if (role === null) {
+    return (
+      <div className="min-h-screen w-screen bg-zinc-950 flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
+        {/* Floating Language Switcher */}
+        <div className="absolute top-6 right-6 z-50 flex items-center gap-2 select-none">
+          <button
+            onClick={() => toggleLanguage('vi')}
+            className={`px-3 py-1.5 rounded-full text-xs font-black transition-all border flex items-center gap-1.5 ${
+              lang === 'vi'
+                ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+            }`}
+          >
+            <span className="text-sm">🇻🇳</span>
+            <span>VIỆT</span>
+          </button>
+          <button
+            onClick={() => toggleLanguage('en')}
+            className={`px-3 py-1.5 rounded-full text-xs font-black transition-all border flex items-center gap-1.5 ${
+              lang === 'en'
+                ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+            }`}
+          >
+            <span className="text-sm">🇺🇸</span>
+            <span>ENG</span>
+          </button>
+        </div>
+
+        {/* Decorative premium aura lights */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#10b981_0.7px,transparent_0.7px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
+
+        {/* Gateway Card */}
+        <div className="max-w-4xl w-full text-center space-y-12 z-10">
+          {/* Brand identity */}
+          <div className="space-y-4 animate-fade-in">
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-650/15 border border-emerald-500/25 flex items-center justify-center shadow-xl">
+                <GraduationCap className="w-9 h-9 text-emerald-400 font-black" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                EduPulse <span className="text-emerald-400 font-extrabold text-[#006b47]">{lang === 'en' ? 'Academica' : 'Học Viện'}</span>
+              </h1>
+            </div>
+            <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+              {t('gatewayDesc')}
+            </p>
+          </div>
+
+          {/* Directory Entry Doors */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {/* Instructor Gate Card */}
+            <motion.div
+              whileHover={{ y: -6, scale: 1.01 }}
+              onClick={handleEnterInstructorPortal}
+              className="bg-zinc-900/60 border border-zinc-850 hover:border-emerald-500/50 hover:bg-zinc-900/90 rounded-2xl p-8 flex flex-col justify-between text-left cursor-pointer transition-all duration-300 shadow-2xl relative group h-full min-h-[300px]"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/[0.03] rounded-bl-full pointer-events-none group-hover:bg-emerald-500/[0.05] transition-all" />
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors">
+                    {t('facultyPortalTitle')}
+                  </h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    {t('facultyPortalDesc')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-8 flex items-center gap-2 text-xs font-bold text-emerald-405 group-hover:text-emerald-305 transition-colors">
+                <span>{t('facultyPortalBtn')}</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </motion.div>
+
+            {/* Student Gate Card */}
+            <motion.div
+              whileHover={{ y: -6, scale: 1.01 }}
+              onClick={() => {
+                setRole('student');
+                setActiveTab('student-portal');
+              }}
+              className="bg-zinc-900/60 border border-zinc-850 hover:border-amber-500/50 hover:bg-zinc-900/90 rounded-2xl p-8 flex flex-col justify-between text-left cursor-pointer transition-all duration-300 shadow-2xl relative group h-full min-h-[300px]"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/[0.02] rounded-bl-full pointer-events-none group-hover:bg-amber-500/[0.04] transition-all" />
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 group-hover:bg-amber-500/20 transition-all">
+                  <User className="w-6 h-6" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
+                    {t('studentPortalTitle')}
+                  </h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    {t('studentPortalDesc')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center gap-2 text-xs font-bold text-amber-405 group-hover:text-amber-305 transition-colors">
+                <span>{t('studentPortalBtn')}</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Footer info/creds */}
+          <p className="text-[11px] font-medium text-zinc-600 uppercase tracking-widest pt-4">
+            {t('footerInfo')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Strict role security guard intercepting unauthorized desk entries
+  if (role === 'instructor' && !isTeacherUser && !isPinUnlocked) {
+    return (
+      <div className="min-h-screen w-screen bg-zinc-950 flex flex-col items-center justify-center p-6 relative overflow-hidden select-none text-center">
+        <div className="absolute inset-0 bg-[radial-gradient(#f43f5e_0.6px,transparent_0.6px)] [background-size:32px_32px] opacity-10 pointer-events-none" />
+        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-8 space-y-6 shadow-2xl relative z-10">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-500 mb-2">
+            <Lock className="w-8 h-8 animate-bounce" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-white tracking-tight">
+              {t('accessDeniedTitle')}
+            </h2>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              {t('accessDeniedDesc')}
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-4">
+            <button
+              onClick={() => {
+                setRole('student');
+                setActiveTab('student-portal');
+              }}
+              className="w-full py-3 bg-zinc-800 hover:bg-zinc-750 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98]"
+            >
+              {t('studentPortalBtn')}
+            </button>
+            <button
+              onClick={() => {
+                setRole(null);
+              }}
+              className="w-full py-3 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-white font-bold rounded-xl text-xs transition-all"
+            >
+              {t('changePortal')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background font-sans antialiased text-on-background">
       {/* Dynamic Role & Notification quick toast if needed */}
@@ -222,7 +510,7 @@ export default function App() {
       <aside className="hidden md:flex h-full w-80 shrink-0 flex-col py-lg px-6 bg-surface/75 border-r border-outline-variant/15 glass-panel-accent z-40 shadow-xl justify-between">
         <div className="space-y-md">
           {/* Header context school identity */}
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 select-none">
             <div className="w-12 h-12 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xl overflow-hidden shadow-sm">
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7z5JIdEfiaIE7TJcD1rmWvqrhbT5Mmui1c98RAFZ1pDdGekQggbsdPHgyVPsRWPzaWHOuFKbM-KS1tz_84zr2WTCr0CSrAovalu3qKboQB7LZTUM2kWuYyBZRb9GFqzT0QN_4wH8swT_Ge4t35U2CCBZwwWeLFN0R-CoLno54xLuwqA4Pxglk1UShgy8ubp3pq7xK5dd2BUejEYhVvhBpCWz0IuTne2Z5FI61mlLzOrTq2SgXHogrRA-NCVnlcTWdyGw2DZcA80Q"
@@ -233,47 +521,30 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-primary leading-tight">Academica High</h1>
-              <p className="text-[12px] font-semibold text-on-surface-variant/80 tracking-wide">Instructor Portal</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700 mt-0.5 animate-fade-in">
+                {role === 'instructor' ? t('facultyPortalTitle') : t('studentPortalTitle')}
+              </p>
             </div>
           </div>
 
-          {/* Core Portal Switcher buttons */}
-          <div className="bg-surface-container-high/50 p-1 rounded-full flex gap-1 border border-outline-variant/20 shadow-inner">
-            <button
-              onClick={() => {
-                setRole('instructor');
-                setActiveTab('dashboard');
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1.5 ${
-                role === 'instructor'
-                  ? 'bg-primary text-on-primary shadow-md'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Instructor Portal</span>
-            </button>
-            <button
-              onClick={() => {
-                setRole('student');
-                setActiveTab('student-portal');
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1.5 ${
-                role === 'student'
-                  ? 'bg-primary text-on-primary shadow-md'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Student Portal</span>
-            </button>
-          </div>
+          {/* Active Dedicated Role Indicator */}
+          {role === 'instructor' ? (
+            <div className="bg-emerald-50 text-[#006b47] border border-emerald-100/70 px-4 py-2.5 rounded-xl font-bold text-xs select-none flex items-center gap-2">
+              <GraduationCap className="w-4 h-4 text-[#006b47]" />
+              <span>{t('facultyMode')}</span>
+            </div>
+          ) : (
+            <div className="bg-amber-50 text-amber-800 border border-amber-100 px-4 py-2.5 rounded-xl font-bold text-xs select-none flex items-center gap-2 animate-fade-in">
+              <User className="w-4 h-4 text-amber-500" />
+              <span>{t('studentMode')}</span>
+            </div>
+          )}
 
           {/* Launch live class prompt */}
           <div className="pt-2">
             <button className="w-full bg-secondary-container hover:-translate-y-0.5 text-on-secondary-container rounded-lg py-3 font-semibold text-sm transition-all shadow-md flex items-center justify-center gap-2">
               <MessageSquare className="w-4 h-4 fill-on-secondary-container" />
-              <span>Launch Live Class Chat</span>
+              <span>{t('liveChatBtn')}</span>
             </button>
           </div>
 
@@ -282,6 +553,18 @@ export default function App() {
             {role === 'instructor' ? (
               <>
                 <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all ${
+                    activeTab === 'overview'
+                      ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary shadow-sm'
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-variant/40'
+                  }`}
+                >
+                  <LayoutDashboard className="w-[18px] h-[18px]" />
+                  <span>{t('tabDashboard')}</span>
+                </button>
+
+                <button
                   onClick={() => setActiveTab('dashboard')}
                   className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-all ${
                     activeTab === 'dashboard'
@@ -289,8 +572,8 @@ export default function App() {
                       : 'text-on-surface-variant hover:text-primary hover:bg-surface-variant/40'
                   }`}
                 >
-                  <LayoutDashboard className="w-[18px] h-[18px]" />
-                  <span>Seating Grid Config</span>
+                  <GraduationCap className="w-[18px] h-[18px]" />
+                  <span>{t('tabSeating')}</span>
                 </button>
 
                 <button
@@ -302,7 +585,7 @@ export default function App() {
                   }`}
                 >
                   <CalendarCheck className="w-[18px] h-[18px]" />
-                  <span>Mark Attendance</span>
+                  <span>{t('tabAttendance')}</span>
                 </button>
 
                 <button
@@ -314,7 +597,7 @@ export default function App() {
                   }`}
                 >
                   <TrendingDown className="w-[18px] h-[18px]" />
-                  <span>Reports & Analytics</span>
+                  <span>{t('tabReports')}</span>
                 </button>
 
                 <button
@@ -326,7 +609,7 @@ export default function App() {
                   }`}
                 >
                   <Gift className="w-[18px] h-[18px]" />
-                  <span>Class Reward Store</span>
+                  <span>{t('tabRewardStore')}</span>
                 </button>
               </>
             ) : (
@@ -340,7 +623,7 @@ export default function App() {
                   }`}
                 >
                   <User className="w-[18px] h-[18px]" />
-                  <span>My Student Diary</span>
+                  <span>{t('tabStudentDiary')}</span>
                 </button>
 
                 <button
@@ -352,7 +635,7 @@ export default function App() {
                   }`}
                 >
                   <Coins className="w-[18px] h-[18px]" />
-                  <span>Tuition & Ledger</span>
+                  <span>{t('tabTuition')}</span>
                 </button>
 
                 <button
@@ -364,7 +647,7 @@ export default function App() {
                   }`}
                 >
                   <Gift className="w-[18px] h-[18px]" />
-                  <span>Browse Reward Store</span>
+                  <span>{t('tabBrowseRewards')}</span>
                 </button>
               </>
             )}
@@ -372,20 +655,27 @@ export default function App() {
         </div>
 
         {/* Footer Support widgets */}
-        <div className="space-y-1 border-t border-outline-variant/20 pt-4">
+        <div className="space-y-2 border-t border-outline-variant/20 pt-4">
+          <button
+            onClick={() => setRole(null)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-500 hover:text-rose-600 hover:bg-rose-50 border border-dashed border-zinc-200 hover:border-rose-200 transition-all select-none"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>{t('changePortal')}</span>
+          </button>
           <a
             href="#support"
             className="flex items-center gap-4 px-4 py-2 rounded-lg text-xs text-on-surface-variant hover:text-primary transition-colors"
           >
             <Settings className="w-4 h-4" />
-            <span>Customize Workspace</span>
+            <span>{t('customizeWorkspace')}</span>
           </a>
           <a
             href="#support"
             className="flex items-center gap-4 px-4 py-2 rounded-lg text-xs text-on-surface-variant hover:text-primary transition-colors"
           >
             <HelpCircle className="w-4 h-4" />
-            <span>Help Desk & Support</span>
+            <span>{t('helpDesk')}</span>
           </a>
         </div>
       </aside>
@@ -396,6 +686,16 @@ export default function App() {
         <header className="h-20 w-full bg-surface/80 backdrop-blur-xl border-b border-outline-variant/15 shadow-sm px-margin-mobile md:px-margin-desktop shrink-0 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
             <span className="text-xl font-black text-primary md:hidden">EduPulse</span>
+            {role && (
+              <button 
+                onClick={() => setRole(null)}
+                className="md:hidden p-1.5 bg-rose-50 hover:bg-rose-100/90 text-rose-650 rounded-lg text-[10.5px] font-black leading-none border border-rose-100 flex items-center gap-1.5 select-none"
+                title={t('changePortal')}
+              >
+                <LogOut className="w-3 h-3 text-rose-505" />
+                <span>{t('exitHub')}</span>
+              </button>
+            )}
 
             {/* Selector box with animated dropdown */}
             <div className="relative">
@@ -439,6 +739,53 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-md">
+            {/* Compact language switcher toggle bar */}
+            <div className="flex items-center gap-1 bg-surface-container-high/60 border border-outline-variant/15 rounded-full p-0.5 shadow-sm select-none">
+              <button
+                onClick={() => toggleLanguage('vi')}
+                className={`px-2 py-1 text-[10px] font-black rounded-full transition-all flex items-center gap-1 ${
+                  lang === 'vi'
+                    ? 'bg-primary text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+                title={t('vietnam')}
+              >
+                <span>🇻🇳</span>
+                <span className="hidden sm:inline">VI</span>
+              </button>
+              <button
+                onClick={() => toggleLanguage('en')}
+                className={`px-2 py-1 text-[10px] font-black rounded-full transition-all flex items-center gap-1 ${
+                  lang === 'en'
+                    ? 'bg-primary text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+                title={t('english')}
+              >
+                <span>🇺🇸</span>
+                <span className="hidden sm:inline">EN</span>
+              </button>
+            </div>
+
+            {/* Force Cloud Database Seeding trigger */}
+            {user && ['mason.nguyen@academica.edu', 'teacher@example.com', 'masonnguyenmm@gmail.com'].includes(user.email || '') && (
+              <button
+                onClick={async () => {
+                  try {
+                    await bootstrapDatabaseIfEmpty();
+                    alert(lang === 'en' ? 'Successfully synchronized your classroom databases with Google Cloud Firestore! Please refetch/refresh your Firestore Console to view the instantiated collections.' : 'Đồng bộ hóa các bảng lớp học thành công với Google Cloud Firestore! Vui lòng tải lại trang Firestore Console để xem các tập hợp mới khởi tạo.');
+                  } catch (e) {
+                    alert('Seed failed. You might lack permissions or require a sign-in refresh: ' + (e as Error).message);
+                  }
+                }}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-secondary-container hover:bg-secondary-container/95 text-on-secondary-container rounded-full text-xs font-black shadow-md transition-all active:scale-95 hover:-translate-y-0.5"
+                title="Synchronize Firestore cloud tables"
+              >
+                <Database className="w-3.5 h-3.5 animate-pulse" />
+                <span>{t('publishSync')}</span>
+              </button>
+            )}
+
             {/* Quick global notifications bell */}
             <button className="relative w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors">
               <Bell className="w-4.5 h-4.5" />
@@ -455,7 +802,7 @@ export default function App() {
                   className="w-10 h-10 rounded-full object-cover border border-outline-variant/20 cursor-pointer hover:opacity-80 transition-opacity"
                   title="Click to Sign Out"
                   onClick={() => {
-                    if (window.confirm('Would you like to sign out of EduPulse?')) {
+                    if (window.confirm(lang === 'en' ? 'Would you like to sign out of EduPulse?' : 'Bạn có muốn đăng xuất khỏi hệ thống EduPulse không?')) {
                       logoutUser();
                     }
                   }}
@@ -466,7 +813,7 @@ export default function App() {
                     onClick={() => logoutUser()}
                     className="text-[9px] font-bold text-primary hover:underline mt-0.5 uppercase tracking-wide text-left block"
                   >
-                    Disconnect
+                    {t('disconnect')}
                   </button>
                 </div>
               </div>
@@ -477,7 +824,7 @@ export default function App() {
                   className="px-4 py-1.5 bg-primary hover:bg-primary/90 text-on-primary rounded-full text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span>Google Login</span>
+                  <span>{t('googleLogin')}</span>
                 </button>
               </div>
             )}
@@ -496,6 +843,27 @@ export default function App() {
               className="w-full h-full"
             >
               {/* Conditional view routers */}
+              {activeTab === 'overview' && (
+                <ClassOverview
+                  students={students}
+                  diaryPosts={diaryPosts}
+                  onNavigateToTab={(tabName) => {
+                    if (tabName === 'student-portal' || tabName === 'tuition') {
+                      setRole('student');
+                    } else {
+                      setRole('instructor');
+                    }
+                    setActiveTab(tabName);
+                  }}
+                  userEmail={user?.email}
+                  lang={lang}
+                  nhungMemo={nhungMemo}
+                  onUpdateMemo={handleUpdateMemo}
+                  loveHearts={loveHearts}
+                  onAddHeart={handleAddHeart}
+                />
+              )}
+
               {activeTab === 'dashboard' && role === 'instructor' && (
                 <ClassroomLayout
                   students={students}
@@ -508,6 +876,7 @@ export default function App() {
                 <AttendanceManager
                   students={students}
                   onUpdateStatus={handleUpdateStatus}
+                  lang={lang}
                 />
               )}
 
@@ -532,12 +901,17 @@ export default function App() {
                   diaryPosts={diaryPosts}
                   onToggleTask={handleToggleTask}
                   onNavigateToStore={() => setActiveTab('rewards')}
+                  lang={lang}
+                  nhungMemo={nhungMemo}
+                  loveHearts={loveHearts}
+                  onAddHeart={handleAddHeart}
                 />
               )}
 
               {activeTab === 'tuition' && role === 'student' && (
                 <TuitionTracker
                   invoices={invoices}
+                  lang={lang}
                 />
               )}
             </motion.div>
@@ -550,12 +924,21 @@ export default function App() {
         {role === 'instructor' ? (
           <>
             <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex flex-col items-center justify-center p-2 text-xs font-bold transition-all ${
+                activeTab === 'overview' ? 'text-primary scale-105' : 'text-on-surface-variant'
+              }`}
+            >
+              <LayoutDashboard className="w-[18px] h-[18px] mb-1" />
+              <span>Home</span>
+            </button>
+            <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex flex-col items-center justify-center p-2 text-xs font-bold transition-all ${
                 activeTab === 'dashboard' ? 'text-primary scale-105' : 'text-on-surface-variant'
               }`}
             >
-              <LayoutDashboard className="w-[18px] h-[18px] mb-1" />
+              <GraduationCap className="w-[18px] h-[18px] mb-1" />
               <span>Seating</span>
             </button>
             <button
@@ -618,6 +1001,124 @@ export default function App() {
           </>
         )}
       </nav>
+
+      {/* Premium Verification Modal */}
+      <AnimatePresence>
+        {showVerifyModal && (
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-xl z-100 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl relative text-left"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  setShowVerifyModal(false);
+                  setPinInput('');
+                  setPinError(null);
+                }}
+                className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors bg-zinc-800/50 hover:bg-zinc-800 p-1.5 rounded-full"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
+                    <Lock className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white tracking-tight">
+                      {t('teacherVerifyTitle')}
+                    </h3>
+                    <p className="text-xs text-zinc-400">
+                      {t('facultyPortalDesc')}
+                    </p>
+                  </div>
+                </div>
+
+                {pinError && (
+                  <div className="bg-rose-500/10 border border-rose-500/20 text-rose-450 p-3.5 rounded-xl text-xs font-semibold leading-relaxed">
+                    {pinError}
+                  </div>
+                )}
+
+                <div className="space-y-2.5">
+                  <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                    {t('notLoggedInTeacher')}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={pinInput}
+                      onChange={(e) => {
+                        setPinInput(e.target.value);
+                        setPinError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleVerifyPin();
+                        }
+                      }}
+                      autoFocus
+                      placeholder={t('teacherVerifyInputPlaceholder')}
+                      className="flex-1 bg-zinc-950 border border-zinc-805 focus:border-amber-500 focus:outline-none rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-zinc-650"
+                    />
+                    <button
+                      onClick={handleVerifyPin}
+                      className="bg-amber-600 hover:bg-amber-700 active:scale-[0.98] transition-all text-white font-bold text-xs px-5 rounded-xl flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{t('verifyBtn')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative py-2 select-none text-center">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-zinc-800" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-zinc-900 px-3 text-[10px] uppercase font-black tracking-widest text-zinc-600">
+                      {t('orLabel')}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await signInWithGoogle();
+                      if (res) {
+                        const isTeacher = TEACHER_EMAILS.includes(res.email || '');
+                        if (isTeacher) {
+                          localStorage.setItem('edupulse_teacher_unlocked', 'true');
+                          setIsPinUnlocked(true);
+                          setRole('instructor');
+                          setActiveTab('overview');
+                          setShowVerifyModal(false);
+                          setPinError(null);
+                        } else {
+                          // Authenticated but not a registered teacher!
+                          setPinError(t('accessDeniedDesc'));
+                        }
+                      }
+                    } catch (err) {
+                      console.error('Login error', err);
+                    }
+                  }}
+                  className="w-full py-3 border border-zinc-850 bg-zinc-950 hover:bg-zinc-900 active:scale-[0.98] transition-all rounded-xl text-xs font-bold text-zinc-300 hover:text-white flex items-center justify-center gap-2"
+                >
+                  <LogIn className="w-4 h-4 text-emerald-400" />
+                  <span>{t('loginWithTeacherGoogleBtn')}</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

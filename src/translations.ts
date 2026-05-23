@@ -1,0 +1,305 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+export type Language = 'en' | 'vi';
+
+export const translations = {
+  en: {
+    // Core gateway
+    gatewayTitle: "EduPulse Ms Nhung",
+    gatewaySubtitle: "Ms Nhung's Private Class HQ",
+    gatewayDesc: "Welcome to Ms Nhung's cozy classroom management hub. Streamline student tracking, seating, attendance, and reward stores effortlessly.",
+    facultyPortalTitle: "Ms Nhung's Desk Room",
+    facultyPortalDesc: "Organize seats, take daily roll calls, monitor score reports, and reward star points for your amazing students.",
+    facultyPortalBtn: "Ms Nhung's Work Desk",
+    studentPortalTitle: "Ms Nhung's Student Hub",
+    studentPortalDesc: "Review your e-learning diary, mark weekly check-ins, verify tuition, and visit the Star Reward Store to redeem items.",
+    studentPortalBtn: "Enter Student Hub",
+    footerInfo: "EduPulse • Personalized for Ms Nhung's Classroom • Google Cloud Firestore Synced",
+    changePortal: "Change Portal Room",
+
+    // Navigation & Status
+    facultyMode: "Faculty Mode Active",
+    studentMode: "Student Mode Active",
+    liveChatBtn: "Launch Live Class Chat",
+    customizeWorkspace: "Customize Workspace",
+    helpDesk: "Help Desk & Support",
+
+    // Tabs
+    tabDashboard: "Class Dashboard",
+    tabSeating: "Seating Grid Config",
+    tabAttendance: "Mark Attendance",
+    tabReports: "Reports & Analytics",
+    tabRewardStore: "Class Reward Store",
+    tabBrowseRewards: "Browse Reward Store",
+    tabStudentDiary: "My Student Diary",
+    tabTuition: "Tuition & Ledger",
+
+    // Header Actions
+    publishSync: "Publish/Sync To Firestore",
+    googleLogin: "Google Login",
+    disconnect: "Disconnect",
+    exitHub: "Exit hub",
+    notifications: "Notifications",
+
+    // Multi-Language selectors
+    selectLanguage: "Language",
+    vietnam: "Vietnamese",
+    english: "English",
+
+    // Class Overview
+    announcementHeader: "Classroom Communications & Digital Board",
+    statsHeader: "Classroom Dynamic Overview",
+    totalStudents: "Total Rostered",
+    classAverage: "Average Grade",
+    absentToday: "Absent Today",
+    outstandingRewards: "Pending Rewards",
+    activeBoard: "Instructor Teaching Board",
+    postedBy: "Broadcasted by Faculty Advisor",
+    attachments: "Resource Attachments",
+    homeworkAssigned: "Homework Tasks Assigned",
+    viewStudentPortal: "Open Student Portal",
+    auditFinances: "Audit Account Ledger",
+    seatingDistribution: "Class Performance Density By Location",
+    poorGradeWarning: "Unsynchronized Firestore State - Please login with Google to lock mutations securely.",
+
+    // Attendance Manager
+    attendanceRoster: "Classroom Attendance Roster",
+    dailyRollCall: "Homeroom Daily Roll Call",
+    rollCallDesc: "Check student status, tag consecutively absent profiles, and monitor real-time class metrics.",
+    submitDaily: "Submit Daily Record",
+    present: "Present",
+    absent: "Absent",
+    late: "Late",
+    excused: "Excused",
+    searchPlaceholder: "Search student by name or ID...",
+    allStudents: "All Students",
+    atRiskTrends: "At Risk Trends",
+    consecutiveAbsences: "Consecutive Absences",
+    academicStanding: "Academic",
+    noMatchingStudents: "No matching students found on search filters.",
+
+    // Rewards
+    milestoneMarketplace: "Milestone Marketplace",
+    rewardStoreTitle: "Student Reward & Perk Store",
+    rewardStoreDesc: "Redeem points earned from classrooms and behavior goals to secure custom items, stationery packs, study perks, or lesson assistance.",
+    pointsWallet: "My Star Wallet",
+    starsAvailable: "Stars Avail.",
+    allRewards: "All Rewards",
+    under50: "Under 50",
+    between50_100: "50 - 100",
+    premiumRewards: "200+ Premium",
+    rare: "Rare",
+    moreNeeded: "More needed",
+    goalUnfinished: "Goal Unfinished",
+    redeemPerk: "Redeem Perk",
+    standingsTitle: "Classroom Star Standings",
+    starsLabel: "Stars",
+    overallGrade: "Overall",
+    you: "(You)",
+
+    // Seating Grid
+    classroomTitle: "Smart Classroom Matrix",
+    interactiveGrid: "Interactive Seating Arrangement Chart",
+    gridDesc: "Real-time layout control. Drag-and-drop elements to reorganize, click any student cell to view full statistics or award stars manually.",
+    reorderMode: "Interactive Seating Mode Active",
+    awardTitle: "Award Star Points",
+    levelUpClass: "Level Up Whole Class (+10 Stars)",
+    seatStatus: "Seat",
+    stars: "stars",
+    grade: "Grade",
+    attendanceRate: "Attendance",
+    unseatedPool: "Unseated Student Pool",
+    dragPrompt: "Drag students back here to clear seating assignments.",
+
+    // Student Portal
+    studentDiary: "Student Learning Diary",
+    diaryGreeting: "Happy Learning",
+    diaryDesc: "Review your daily homework syllabus, complete assignments checklists, check course files, and manage earned classroom achievements.",
+    weeklySyllabus: "Weekly Diary Posts",
+    homeworkTasks: "My Homework Checklist",
+    completed: "Completed",
+    pending: "Pending",
+    noTasks: "No assigned tasks outstanding for this module post.",
+    learningResources: "E-Learning Resources",
+    downloadSyllabus: "Download Syllabus",
+    watchLecture: "Watch Lecture Recording",
+
+    // Tuition
+    tuitionAudit: "Tuition, Ledger & Calendar Audit",
+    financialTracker: "Financial & Attendance Tracker",
+    trackerDesc: "Review subscription milestones, active lesson credit allotments, and current month calendar correlations.",
+    classBalance: "Class Balance Accounts",
+    creditsRemaining: "of 24 credits left",
+    renewalNeeded: "Renewal Needed",
+    attendanceCalendar: "Class Attendance Calendar",
+    billingLedger: "Tuition Payment Ledger Reports",
+    billingSync: "Account Synchronized",
+    tableDate: "Billing Date",
+    tableInvoice: "Billing Invoice ID",
+    tableAmount: "Allocated Amount",
+    tableStatus: "Receipt Status",
+
+    // Role Security Labels
+    teacherVerifyTitle: "Verify Ms. Nhung's Desk Room PIN",
+    teacherVerifyInputPlaceholder: "Enter Teacher PIN Code (e.g., 2026)",
+    verifyBtn: "Unlock Desk",
+    verifyBtnCancel: "Cancel",
+    invalidPin: "Incorrect PIN code! Please try again.",
+    accessDeniedTitle: "Access Denied 🔒",
+    accessDeniedDesc: "Your Google Account is registered as a Student and does not have permission to access Ms. Nhung's Desk Room. Please log in with a Teacher Gmail, enter the PIN, or switch to the Student Portal.",
+    notLoggedInTeacher: "Enter Ms. Nhung's Teacher PIN to instantly unlock, or sign in with Google:",
+    orLabel: "— OR —",
+    loginWithTeacherGoogleBtn: "Login with Teacher Google Account"
+  },
+  vi: {
+    // Core gateway
+    gatewayTitle: "EduPulse Cô Nhung",
+    gatewaySubtitle: "Không Gian Quản Lý Lớp Cô Nhung",
+    gatewayDesc: "Chào mừng đến với trung tâm quản lý lớp học của Cô Nhung. Nơi tổ chức chỗ ngồi, điểm danh chuyên cần, cập nhật nhật ký bài học và đổi thưởng ngôi sao.",
+    facultyPortalTitle: "Phòng Làm Việc Cô Nhung",
+    facultyPortalDesc: "Sắp xếp chỗ ngồi tương tác, ghi nhận sĩ số điểm danh hàng ngày, quản lý báo cáo học lực và tặng sao khuyến khích cho học sinh thân yêu.",
+    facultyPortalBtn: "Vào Bàn Làm Việc",
+    studentPortalTitle: "Góc Học Tập Học Sinh",
+    studentPortalDesc: "Theo dõi giáo trình hàng ngày, xem lịch hoạt động, theo dõi hóa đơn học phí và tích sao đổi quà tại Cửa hàng Ngôi sao.",
+    studentPortalBtn: "Vào Cổng Học Sinh",
+    footerInfo: "Hệ thống EduPulse • Thiết kế dành riêng cho Cô Nhung • Đồng bộ hóa Firestore",
+    changePortal: "Quay Về Cổng Chính",
+
+    // Navigation & Status
+    facultyMode: "Chế độ Giáo viên hoạt động",
+    studentMode: "Chế độ Học sinh hoạt động",
+    liveChatBtn: "Bắt đầu Chat Trực tiếp",
+    customizeWorkspace: "Tùy chỉnh không gian",
+    helpDesk: "Hỗ trợ & Trợ giúp",
+
+    // Tabs
+    tabDashboard: "Bảng điều khiển lớp",
+    tabSeating: "Sơ đồ chỗ ngồi",
+    tabAttendance: "Điểm danh học sinh",
+    tabReports: "Báo cáo & Phân tích",
+    tabRewardStore: "Cửa hàng phần thưởng",
+    tabBrowseRewards: "Cửa hàng đổi thưởng",
+    tabStudentDiary: "Nhật ký của tôi",
+    tabTuition: "Học phí & Sổ sách",
+
+    // Header Actions
+    publishSync: "Đồng bộ hóa Firestore Cloud",
+    googleLogin: "Đăng nhập Google",
+    disconnect: "Đăng xuất",
+    exitHub: "Thoát",
+    notifications: "Thông báo",
+
+    // Multi-Language selectors
+    selectLanguage: "Ngôn ngữ",
+    vietnam: "Tiếng Việt",
+    english: "Tiếng Anh",
+
+    // Class Overview
+    announcementHeader: "Bảng Thông tin lớp & Thông báo Kỹ thuật số",
+    statsHeader: "Tổng quan Động lớp học",
+    totalStudents: "Tổng số học sinh",
+    classAverage: "Điểm trung bình",
+    absentToday: "Vắng mặt hôm nay",
+    outstandingRewards: "Mục chờ đổi thưởng",
+    activeBoard: "Bảng giảng dạy giáo viên",
+    postedBy: "Phát sóng bởi Cố vấn Học tập",
+    attachments: "Tài liệu đính kèm",
+    homeworkAssigned: "Bài tập được giao",
+    viewStudentPortal: "Mở Cổng Học Sinh",
+    auditFinances: "Kiểm tra Sổ Sách Tài Chính",
+    seatingDistribution: "Mật độ Thành tích theo Vị trí ngồi",
+    poorGradeWarning: "Lưu trữ Firestore chưa đồng bộ - Hãy đăng nhập để lưu trữ bảo mật.",
+
+    // Attendance Manager
+    attendanceRoster: "Danh sách Điểm danh Lớp học",
+    dailyRollCall: "Điểm danh Hàng ngày",
+    rollCallDesc: "Kiểm tra trạng thái học sinh, theo dõi chuyên cần và xu hướng vắng mặt trong thời gian thực.",
+    submitDaily: "Gửi Báo cáo Ngày",
+    present: "Có mặt",
+    absent: "Vắng mặt",
+    late: "Đi muộn",
+    excused: "Có phép",
+    searchPlaceholder: "Tìm học sinh theo tên hoặc ID...",
+    allStudents: "Tất cả học sinh",
+    atRiskTrends: "Cảnh báo vắng nhiều",
+    consecutiveAbsences: "Vắng liên tiếp",
+    academicStanding: "Học lực",
+    noMatchingStudents: "Không tìm thấy học sinh nào phù hợp bộ lọc.",
+
+    // Rewards
+    milestoneMarketplace: "Thị trường Đổi thưởng",
+    rewardStoreTitle: "Cửa hàng Phần thưởng Học sinh",
+    rewardStoreDesc: "Đổi điểm tích lũy đạt được từ lớp học và mục tiêu hành vi lấy văn phòng phẩm, đặc quyền học tập hay hỗ trợ bài học.",
+    pointsWallet: "Ví Ngôi sao của tôi",
+    starsAvailable: "Sao khả dụng",
+    allRewards: "Tất cả phần thưởng",
+    under50: "Dưới 50 🌟",
+    between50_100: "Từ 50 - 100 🌟",
+    premiumRewards: "Từ 200 🌟 (VIP)",
+    rare: "Hiếm",
+    moreNeeded: "Cần thêm",
+    goalUnfinished: "Chưa đủ mục tiêu",
+    redeemPerk: "Đổi Đặc Quyền",
+    standingsTitle: "Bảng xếp hạng Ngôi sao lớp học",
+    starsLabel: "Sao",
+    overallGrade: "Trung bình",
+    you: "(Bạn)",
+
+    // Seating Grid
+    classroomTitle: "Ma trận Chỗ ngồi lớp học",
+    interactiveGrid: "Sơ đồ và Vị trí Chỗ ngồi Tương tác",
+    gridDesc: "Điều khiển sơ đồ thời gian thực. Kéo thả để sắp xếp vị trí hoặc nhấp vào ô bất kỳ để thưởng sao thủ công.",
+    reorderMode: "Chế độ Sắp xếp Chỗ ngồi đang hoạt động",
+    awardTitle: "Thưởng Điểm Sao",
+    levelUpClass: "Tặng sao cả lớp (+10 Sao)",
+    seatStatus: "Ghế",
+    stars: "ngôi sao",
+    grade: "Điểm số",
+    attendanceRate: "Chuyên cần",
+    unseatedPool: "Học sinh chưa xếp chỗ",
+    dragPrompt: "Kéo học sinh vào đây để xóa vị trí ngồi.",
+
+    // Student Portal
+    studentDiary: "Nhật ký Học tập Học sinh",
+    diaryGreeting: "Học tập hiệu quả nhé",
+    diaryDesc: "Xem giáo trình bài tập hàng ngày, kiểm tra tài liệu buổi học và các thành tựu mong muốn.",
+    weeklySyllabus: "Nhật ký học tập tuần này",
+    homeworkTasks: "Danh sách Bài tập mẫu",
+    completed: "Hoàn thành",
+    pending: "Chờ xử lý",
+    noTasks: "Không có bài tập chưa hoàn thành nào cho đề mục này.",
+    learningResources: "Tải nguyên Học tập Số",
+    downloadSyllabus: "Tải Giáo trình học",
+    watchLecture: "Xem Bài giảng Video",
+
+    // Tuition
+    tuitionAudit: "Kiểm tra Học phí & Sổ Điểm danh",
+    financialTracker: "Theo dõi Đồng bộ Tài chính & Chuyên cần",
+    trackerDesc: "Theo dõi số dư tín chỉ học, chu kỳ hóa đơn học phí và lịch sự kiện điểm danh tháng.",
+    classBalance: "Tín chỉ Tài khoản học",
+    creditsRemaining: "trong 24 tín chỉ khả dụng",
+    renewalNeeded: "Cần gia hạn sớm",
+    attendanceCalendar: "Lịch Điểm danh Lớp học",
+    billingLedger: "Hóa đơn Học phí đã phát hành",
+    billingSync: "Sổ sách Đã đồng bộ",
+    tableDate: "Ngày xuất hóa đơn",
+    tableInvoice: "Mã số Hóa đơn",
+    tableAmount: "Số tiền thanh toán",
+    tableStatus: "Trạng thái biên lai",
+
+    // Role Security Labels
+    teacherVerifyTitle: "Xác thực Mật mã Phòng Cô Nhung",
+    teacherVerifyInputPlaceholder: "Nhập mã PIN Giáo viên (Ví dụ: 2026)",
+    verifyBtn: "Mở khóa Bàn làm việc",
+    verifyBtnCancel: "Hủy bỏ",
+    invalidPin: "Mã PIN chưa chính xác! Vui lòng thử lại.",
+    accessDeniedTitle: "Từ chối Truy cập 🔒",
+    accessDeniedDesc: "Tài khoản Google đăng nhập hiện tại là Học sinh và không có quyền truy cập vào Bàn làm việc của Cô Nhung. Vui lòng đăng nhập tài khoản Giáo viên, nhập PIN hoặc quay về Góc học sinh.",
+    notLoggedInTeacher: "Nhập trực tiếp mã PIN Cô Nhung để mở khóa nhanh, hoặc Đăng nhập Google:",
+    orLabel: "— HOẶC —",
+    loginWithTeacherGoogleBtn: "Đăng nhập Google Giáo Viên"
+  }
+};

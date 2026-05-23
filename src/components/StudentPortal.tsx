@@ -5,14 +5,19 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, ShieldAlert, Award, FileText, CheckCircle2, Circle, ArrowRight, Download, BookOpen, Clock, Music } from 'lucide-react';
+import { Star, ShieldAlert, Award, FileText, CheckCircle2, Circle, ArrowRight, Download, BookOpen, Clock, Music, Heart } from 'lucide-react';
 import { Student, DiaryPost, HomeworkTask } from '../types';
+import { Language } from '../translations';
 
 interface StudentPortalProps {
   student: Student;
   diaryPosts: DiaryPost[];
   onToggleTask: (postId: string, taskId: string) => void;
   onNavigateToStore: () => void;
+  lang?: Language;
+  nhungMemo?: string;
+  loveHearts?: number;
+  onAddHeart?: () => void;
 }
 
 export default function StudentPortal({
@@ -20,7 +25,23 @@ export default function StudentPortal({
   diaryPosts,
   onToggleTask,
   onNavigateToStore,
+  lang = 'vi',
+  nhungMemo = '',
+  loveHearts = 128,
+  onAddHeart,
 }: StudentPortalProps) {
+  // Local floating heart states for lovely animations in the Student Portal too!
+  const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
+
+  const triggerLocalHeart = () => {
+    if (onAddHeart) onAddHeart();
+    const id = Date.now();
+    const x = Math.random() * 80 - 40;
+    setFloatingHearts(prev => [...prev, { id, x }]);
+    setTimeout(() => {
+      setFloatingHearts(prev => prev.filter(h => h.id !== id));
+    }, 1500);
+  };
   return (
     <div className="space-y-md">
       {/* Decorative background gradients */}
@@ -29,15 +50,80 @@ export default function StudentPortal({
       {/* Page header banner greeting */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-md pb-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-primary font-bold">Student Center Portal</p>
+          <p className="text-xs uppercase tracking-widest text-primary font-bold">{lang === 'en' ? 'Student Center Portal' : 'Cổng Thông Tin Học Sinh'}</p>
           <h2 className="text-3xl font-extrabold text-on-background mt-1 tracking-tight">
-            Hello, {student.name.split(' ')[0]}! ✨
+            {lang === 'en' ? 'Hello' : 'Xin chào'}, {student.name.split(' ')[0]}! ✨
           </h2>
           <p className="text-body-md text-on-surface-variant">
-            Here is a look at your learning logs, points and homework checklists for today.
+            {lang === 'en' 
+              ? 'Here is a look at your learning logs, points and homework checklists for today.' 
+              : 'Dưới đây là tổng quan lịch trình học tập, sao tích luỹ và danh sách bài tập của bạn ngày hôm nay.'}
           </p>
         </div>
       </div>
+
+      {/* Ms Nhung's Personalized Message Corner & Heart Board */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-gradient-to-br from-rose-50/70 via-white to-pink-50/30 border border-rose-100/60 p-5 rounded-2xl shadow-sm relative overflow-hidden"
+      >
+        <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-rose-200/10 rounded-full blur-xl pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="p-1 bg-rose-100 rounded-full text-rose-500 text-xs">
+                🌸
+              </span>
+              <span className="text-[11px] font-black tracking-widest text-rose-500 uppercase">
+                {lang === 'en' ? "NOTE FROM MS NHUNG" : "LỜI NHẮN TỪ CÔ NHUNG"}
+              </span>
+            </div>
+            <p className="text-sm italic font-medium text-zinc-800 pr-2">
+              "{nhungMemo || (lang === 'en' ? "Believe in yourself and shine always!" : "Hãy luôn tự tin vào bản thân và tỏa sáng nhé!")}"
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 border-t sm:border-y-0 sm:border-l border-rose-100/50 pt-3 sm:pt-0 sm:pl-5 min-w-[200px] justify-between sm:justify-end w-full sm:w-auto">
+            <div className="text-right animate-fade-in">
+              <span className="text-[9px] font-bold text-zinc-400 block tracking-wider uppercase">
+                {lang === 'en' ? "HEARTS GIVEN" : "TIM YÊU THƯƠNG"}
+              </span>
+              <span className="text-base font-black text-rose-600 flex items-center justify-center gap-1">
+                {loveHearts.toLocaleString()} 💖
+              </span>
+            </div>
+
+            <button
+              onClick={triggerLocalHeart}
+              className="px-4 py-1.5 bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white rounded-full text-xs font-bold transition-all shadow-xs hover:shadow-sm active:scale-95 flex items-center gap-1 relative overflow-visible select-none"
+            >
+              <Heart className="w-3.5 h-3.5 fill-white text-white animate-pulse" />
+              <span>{lang === 'en' ? "Love!" : "Thả tim!"}</span>
+
+              {/* Floatings */}
+              <div className="absolute inset-x-0 bottom-0 overflow-visible pointer-events-none flex justify-center">
+                <AnimatePresence>
+                  {floatingHearts.map((h) => (
+                    <motion.span
+                      key={h.id}
+                      initial={{ opacity: 1, y: -20, x: h.x, scale: 0.7 }}
+                      animate={{ opacity: 0, y: -100, x: h.x + Math.sin(h.id) * 20, scale: 1.4 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                      className="absolute text-rose-500 pointer-events-none text-xl z-20"
+                      style={{ bottom: '24px' }}
+                    >
+                      ❤️
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </button>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Bento Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
@@ -48,24 +134,24 @@ export default function StudentPortal({
 
           <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6 h-full">
             <div className="flex-1 space-y-4 text-center sm:text-left">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary-container/15 text-on-secondary-container font-label-sm text-xs font-bold">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary-container/15 text-on-secondary-container font-label-sm text-xs font-bold animate-fade-in">
                 <Star className="w-4 h-4 text-secondary-container fill-secondary-container animate-pulse" />
-                Active Badge: Master Botanist 🍀
+                {lang === 'en' ? 'Active Badge: Master Botanist 🍀' : 'Huy hiệu: Nhà thực vật học Tài ba 🍀'}
               </span>
 
-              <h2 className="text-2xl font-bold text-on-surface">My Star Wallet</h2>
+              <h2 className="text-2xl font-bold text-on-surface">{lang === 'en' ? 'My Star Wallet' : 'Ví Sao Tích Luỹ'}</h2>
               <div className="flex items-baseline justify-center sm:justify-start gap-2.5">
                 <span className="text-6xl font-extrabold text-primary tracking-tight">
                   {student.stars}
                 </span>
-                <span className="text-lg font-bold text-on-surface-variant/80">Available Stars</span>
+                <span className="text-lg font-bold text-on-surface-variant/80">{lang === 'en' ? 'Available Stars' : 'Sao hiện có'}</span>
               </div>
 
               <button 
                 onClick={onNavigateToStore}
                 className="bg-primary text-on-primary font-bold py-3.5 px-6 rounded-full hover:bg-primary-container transition-all active:scale-95 shadow-md shadow-primary/10 flex items-center justify-center gap-2 mx-auto sm:mx-0"
               >
-                <span>Visit Classroom Reward Store</span>
+                <span>{lang === 'en' ? 'Visit Classroom Reward Store' : 'Đến Cửa hàng đổi thưởng Lớp học'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -74,7 +160,7 @@ export default function StudentPortal({
             <div className="relative w-40 h-40 md:w-48 md:h-48 flex-shrink-0 animate-bounce" style={{ animationDuration: '6s' }}>
               <div className="absolute inset-x-0 bottom-2 bg-secondary-container/30 blur-2xl rounded-full h-6 w-3/4 mx-auto" />
               <img
-                src="https://lh3.googleusercontent.com/aida/ADBb0uj_ofB6D6qlAtAwADsj9213LZ4IYRfPfBa6L_56Vzdj7_1bCdbO30G3avnXEReTJCq2RRl_yZMmij5zMNbMYoQiwKCYFNSIslLCnwk5C1HuXZKL1uujzzTqeBfFk_tzGdbdZt7jOUoyPT6GQQBEOcqBjS9SIln51lBmY_2Seg2f_RcaoA-YTdkmkbNrTxjgcYCskAHhfS6gGFV4L3D8C70G9lhBeh5nzC9IeOQ_hJmdCO2eLFbrC6KoPhc"
+                src="https://lh3.googleusercontent.com/aida/ADBb0uj_ofB6D6qlAtAwADsj9213LZ4IYRfPfBa6L_56Vzdj7_1bCdbO30G3avnXEReTJCq2RRl_yZMmij5zMNbMYoQiwKCYFNSIslLCnwk5C1HuXZKL1uujzzTqeBfFk_tzGdbdZt7jOUoyPT6GQQBEOcqBjS9SIln51lBmY_2Seg2f_RcaoA-YTdkmkbNrTxjgcYCskAHhfS6gGFV4L3D8C71G9lhBeh5nzC9IeOQ_hJmdCO2eLFbrC6KoPhc"
                 alt="3D Golden Star Medal"
                 className="relative z-10 w-full h-full object-contain drop-shadow"
               />
@@ -87,18 +173,20 @@ export default function StudentPortal({
           {/* Progress Card */}
           <div className="bg-surface-container-lowest/80 backdrop-blur-xl border border-outline-variant/20 rounded-lg p-6 flex-1 flex flex-col justify-center shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-label-sm text-xs uppercase tracking-wider text-on-surface-variant">Weekly Learning Goal</h3>
+              <h3 className="font-label-sm text-xs uppercase tracking-wider text-on-surface-variant">{lang === 'en' ? 'Weekly Learning Goal' : 'Mục tiêu Học tập Tuần'}</h3>
               <Clock className="w-4 h-4 text-tertiary" />
             </div>
             
-            <div className="text-xl font-bold text-on-surface">80% Submissions Completed</div>
+            <div className="text-xl font-bold text-on-surface">{lang === 'en' ? '80% Submissions Completed' : 'Đã nộp 80% số Bài tập'}</div>
             {/* High end progress tracker bar */}
             <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden mt-3 shadow-inner">
               <div className="h-full bg-secondary-container rounded-full" style={{ width: '80%' }} />
             </div>
 
             <p className="font-label-sm text-xs text-on-surface-variant/90 mt-3 font-medium">
-              Only 1 assignment remaining for the week. Complete cell observation logs!
+              {lang === 'en' 
+                ? 'Only 1 assignment remaining for the week. Complete cell observation logs!'
+                : 'Chỉ còn lại 1 bài tập tuần này. Hãy hoàn tất nhật ký quan sát tế bào!'}
             </p>
           </div>
 
@@ -107,13 +195,13 @@ export default function StudentPortal({
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
             
             <div>
-              <p className="font-label-sm text-xs uppercase tracking-wider text-white/85">Up Next Tomorrow</p>
-              <h4 className="text-xl font-bold mt-1">Science Fair Assembly</h4>
+              <p className="font-label-sm text-xs uppercase tracking-wider text-white/85">{lang === 'en' ? 'Up Next Tomorrow' : 'Sự kiện Ngày mai'}</p>
+              <h4 className="text-xl font-bold mt-1">{lang === 'en' ? 'Science Fair Assembly' : 'Hội chợ Khoa học Toàn trường'}</h4>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-semibold text-white/90 mt-4">
               <Clock className="w-4 h-4" />
-              <span>Oct 25, 10:00 AM • Gym Arena</span>
+              <span>{lang === 'en' ? 'Oct 25, 10:00 AM • Gym Arena' : '25/10, 10:00 sáng • Thể chất'}</span>
             </div>
           </div>
         </div>
@@ -121,7 +209,7 @@ export default function StudentPortal({
 
       {/* Class Diary Feed timeline container */}
       <div className="max-w-4xl space-y-md pt-5">
-        <h3 className="text-2xl font-bold text-on-surface">Academic Class Diary</h3>
+        <h3 className="text-2xl font-bold text-on-surface">{lang === 'en' ? 'Academic Class Diary' : 'Nhật ký Học tập & Bài tập Lớp'}</h3>
 
         <div className="relative pl-4 md:pl-0">
           {/* Left timeline thread alignment wire */}
@@ -183,7 +271,7 @@ export default function StudentPortal({
                         </div>
                         <div>
                           <p className="font-label-sm text-xs font-semibold text-on-surface">{post.pdf.name}</p>
-                          <p className="font-label-xs text-[10px] text-outline">{post.pdf.size} Document sheet</p>
+                          <p className="font-label-xs text-[10px] text-outline">{post.pdf.size} {lang === 'en' ? 'Document sheet' : 'Tài liệu hướng dẫn'}</p>
                         </div>
                       </div>
                       <button className="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container transition-all">
@@ -196,7 +284,7 @@ export default function StudentPortal({
                   {post.homework.length > 0 && (
                     <div className="bg-surface rounded-lg p-4 border border-outline-variant/30 shadow-inner">
                       <h5 className="font-label-sm text-xs uppercase tracking-wider text-on-surface-variant mb-3 font-bold">
-                        Pending Assignments Checklist
+                        {lang === 'en' ? 'Pending Assignments Checklist' : 'Danh sách Bài tập Cần nộp'}
                       </h5>
                       <div className="space-y-2">
                         {post.homework.map((task) => (
