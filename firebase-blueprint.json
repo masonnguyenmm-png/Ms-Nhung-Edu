@@ -1,0 +1,193 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Represents a student enrolled in the classroom, their grades, status, seating layout, and accumulated reward stars.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the student."
+        },
+        "name": {
+          "type": "string",
+          "description": "The student's full name."
+        },
+        "avatar": {
+          "type": "string",
+          "description": "URL to the student's avatar image."
+        },
+        "grade": {
+          "type": "number",
+          "description": "The student's grade percentage from 0 to 100."
+        },
+        "stars": {
+          "type": "number",
+          "description": "The student's accumulated star balance to spend in the reward store."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Present", "Absent", "Late", "Excused", "Participating"],
+          "description": "The student's current attendance and participation status."
+        },
+        "consecutiveAbsences": {
+          "type": "number",
+          "description": "The number of consecutive days the student has been marked absent."
+        },
+        "isPresent": {
+          "type": "boolean",
+          "description": "Whether the student is physically present in the classroom today."
+        },
+        "seatId": {
+          "type": "string",
+          "description": "The assigned desk coordinate identifier (e.g., 'A1')."
+        }
+      },
+      "required": ["id", "name", "avatar", "grade", "stars", "status", "isPresent"]
+    },
+    "RewardItem": {
+      "title": "RewardItem",
+      "description": "An item in the classroom store that students can unlock by redeeming their stars.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier of the reward."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title/name of the reward."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the reward perks."
+        },
+        "cost": {
+          "type": "number",
+          "description": "The star cost required to purchase/redeem this reward."
+        },
+        "icon": {
+          "type": "string",
+          "description": "The Lucide icon identifier."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["All", "Classroom Perks", "Academic Bonuses", "Physical Items"],
+          "description": "Category categorization for sorting and layout."
+        },
+        "popular": {
+          "type": "boolean",
+          "description": "Whether the reward is marked as a trending/popular item."
+        },
+        "premium": {
+          "type": "boolean",
+          "description": "Whether the reward is a high-value premium tier."
+        }
+      },
+      "required": ["id", "title", "description", "cost", "icon", "category"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Financial ledger billing invoices for student tuition fees.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique invoice billing ID identifier."
+        },
+        "date": {
+          "type": "string",
+          "description": "Invoice date of issuance."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Dollar amount billed."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Paid", "Pending", "Overdue"],
+          "description": "Payment status."
+        }
+      },
+      "required": ["id", "date", "amount", "status"]
+    },
+    "DiaryPost": {
+      "title": "DiaryPost",
+      "description": "A collaborative interactive lesson entry recorded by teachers with associated homework checklist tasks.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the study diary post."
+        },
+        "date": {
+          "type": "string",
+          "description": "Post date."
+        },
+        "time": {
+          "type": "string",
+          "description": "Post timestamp."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Academic subject category (e.g., 'Mathematics')."
+        },
+        "topic": {
+          "type": "string",
+          "description": "Academic topic and descriptive emoji marker (e.g., 'Fractions 🍕')."
+        },
+        "title": {
+          "type": "string",
+          "description": "A descriptive title of the day's class focus."
+        },
+        "content": {
+          "type": "string",
+          "description": "Narrative paragraph of the class instruction."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Topic index keyword tags."
+        },
+        "homework": {
+          "type": "array",
+          "description": "Nested inline checklist tasks that students can toggle to completed."
+        },
+        "images": {
+          "type": "array",
+          "description": "Visual board references associated with this class."
+        },
+        "pdf": {
+          "type": "object",
+          "description": "Worksheet pdf descriptor containing name and size string keys."
+        }
+      },
+      "required": ["id", "date", "time", "subject", "topic", "title", "content", "tags", "homework"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": {
+        "$ref": "#/entities/Student"
+      },
+      "description": "Collection storing student details, seating nodes, grades, and stars."
+    },
+    "/rewards/{rewardId}": {
+      "schema": {
+        "$ref": "#/entities/RewardItem"
+      },
+      "description": "Collection storing available reward items."
+    },
+    "/invoices/{invoiceId}": {
+      "schema": {
+        "$ref": "#/entities/Invoice"
+      },
+      "description": "Collection storing billing invoices."
+    },
+    "/diaryPosts/{diaryPostId}": {
+      "schema": {
+        "$ref": "#/entities/DiaryPost"
+      },
+      "description": "Collection storing daily dynamic school logs, tags and homework lists."
+    }
+  }
+}

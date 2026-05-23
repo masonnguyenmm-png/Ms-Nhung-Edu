@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net - Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+
+    // Validates document ID string lengths and patterns
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Accessors
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    // Role Lookup: Look up role using exists() on a trusted database document
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        // Development administrator email fallback (matching user token email)
+        (request.auth.token.email_verified == true && request.auth.token.email in ['mason.nguyen@academica.edu', 'teacher@example.com', 'masonnguyenmm@gmail.com'])
+      );
+    }
+
+    // --- Validation Helper Primitives ---
+
+    function isValidStudent(student) {
+      return student.id is string && student.id.size() <= 128 &&
+             student.name is string && student.name.size() > 0 && student.name.size() <= 100 &&
+             student.avatar is string && student.avatar.size() <= 2000 &&
+             (student.grade is int || student.grade is float) && student.grade >= 0 && student.grade <= 100 &&
+             student.stars is int && student.stars >= 0 &&
+             student.status is string && student.status.size() <= 50 &&
+             student.isPresent is bool &&
+             (student.get('seatId', null) == null || (student.seatId is string && student.seatId.size() <= 10)) &&
+             student.keys().hasAll(['id', 'name', 'avatar', 'grade', 'stars', 'status', 'isPresent']) &&
+             student.keys().size() <= 9;
+    }
+
+    function isValidRewardItem(reward) {
+      return reward.id is string && reward.id.size() <= 128 &&
+             reward.title is string && reward.title.size() > 0 && reward.title.size() <= 100 &&
+             reward.description is string && reward.description.size() <= 1000 &&
+             reward.cost is int && reward.cost >= 0 &&
+             reward.icon is string && reward.icon.size() <= 50 &&
+             reward.category is string && reward.category.size() <= 50 &&
+             reward.keys().hasAll(['id', 'title', 'description', 'cost', 'icon', 'category']) &&
+             reward.keys().size() <= 8;
+    }
+
+    function isValidInvoice(invoice) {
+      return invoice.id is string && invoice.id.size() <= 128 &&
+             invoice.date is string && invoice.date.size() <= 50 &&
+             (invoice.amount is int || invoice.amount is float) && invoice.amount >= 0 &&
+             invoice.status is string && invoice.status.size() <= 20 &&
+             (invoice.get('studentId', null) == null || (invoice.studentId is string && invoice.studentId.size() <= 128)) &&
+             invoice.keys().hasAll(['id', 'date', 'amount', 'status']) &&
+             invoice.keys().size() <= 5;
+    }
+
+    function isValidDiaryPost(post) {
+      return post.id is string && post.id.size() <= 128 &&
+             post.date is string && post.date.size() <= 50 &&
+             post.time is string && post.time.size() <= 50 &&
+             post.subject is string && post.subject.size() <= 100 &&
+             post.topic is string && post.topic.size() <= 100 &&
+             post.title is string && post.title.size() <= 200 &&
+             post.content is string && post.content.size() <= 5000 &&
+             post.tags is list && post.tags.size() <= 10 &&
+             post.homework is list && post.homework.size() <= 20 &&
+             post.keys().hasAll(['id', 'date', 'time', 'subject', 'topic', 'title', 'content', 'tags', 'homework']) &&
+             post.keys().size() <= 12;
+    }
+
+
+    // --- Collections ---
+
+    // 1. ADMINS COLLECTION
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; // System bootstrapped or manually managed only
+    }
+
+    // 2. STUDENTS COLLECTION
+    match /students/{studentId} {
+      allow list, get: if true;
+      allow create, delete: if isAdmin() && isValidId(studentId) && isValidStudent(incoming());
+      
+      allow update: if isValidId(studentId) && (
+        // Administrative full override
+        (isAdmin() && isValidStudent(incoming())) ||
+        
+        // Self-purchasing star-decrementing rule (Tiered Identity)
+        (
+          isSignedIn() && 
+          request.auth.uid == studentId &&
+          isValidStudent(incoming()) &&
+          incoming().name == existing().name &&
+          incoming().grade == existing().grade &&
+          incoming().status == existing().status &&
+          incoming().isPresent == existing().isPresent &&
+          incoming().get('seatId', null) == existing().get('seatId', null) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['stars']) &&
+          incoming().stars < existing().stars &&
+          incoming().stars >= 0
+        )
+      );
+    }
+
+    // 3. REWARDS COLLECTION
+    match /rewards/{rewardId} {
+      allow list, get: if true;
+      allow create, delete: if isAdmin() && isValidId(rewardId) && isValidRewardItem(incoming());
+      allow update: if isAdmin() && isValidId(rewardId) && isValidRewardItem(incoming());
+    }
+
+    // 4. INVOICES COLLECTION
+    match /invoices/{invoiceId} {
+      allow list, get: if true;
+      allow create, delete: if isAdmin() && isValidId(invoiceId) && isValidInvoice(incoming());
+      allow update: if isAdmin() && isValidId(invoiceId) && isValidInvoice(incoming());
+    }
+
+    // 5. DIARYPOSTS COLLECTION
+    match /diaryPosts/{postId} {
+      allow list, get: if true;
+      allow create, delete: if isAdmin() && isValidId(postId) && isValidDiaryPost(incoming());
+      
+      allow update: if isValidId(postId) && (
+        // Instructor full write
+        (isAdmin() && isValidDiaryPost(incoming())) ||
+        
+        // Student toggling homework inline status only (Tiered Identity)
+        (
+          isSignedIn() &&
+          isValidDiaryPost(incoming()) &&
+          incoming().title == existing().title &&
+          incoming().content == existing().content &&
+          incoming().subject == existing().subject &&
+          incoming().topic == existing().topic &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['homework'])
+        )
+      );
+    }
+  }
+}
