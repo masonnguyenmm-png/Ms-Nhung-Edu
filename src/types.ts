@@ -15,6 +15,7 @@ export interface Student {
   consecutiveAbsences?: number;
   isPresent: boolean;
   seatId?: string | null; // desk layout assignment
+  classId?: string; // class identifier
 }
 
 export interface RewardItem {

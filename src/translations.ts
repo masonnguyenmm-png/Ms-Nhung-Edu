@@ -152,7 +152,17 @@ export const translations = {
     accessDeniedDesc: "Your Google Account is registered as a Student and does not have permission to access Ms. Nhung's Desk Room. Please log in with a Teacher Gmail, enter the PIN, or switch to the Student Portal.",
     notLoggedInTeacher: "Enter Ms. Nhung's Teacher PIN to instantly unlock, or sign in with Google:",
     orLabel: "— OR —",
-    loginWithTeacherGoogleBtn: "Login with Teacher Google Account"
+    loginWithTeacherGoogleBtn: "Login with Teacher Google Account",
+
+    // Add Student Labels
+    addStudentBtn: "Add Student",
+    addStudentModalTitle: "Enroll New Student to Class Roster",
+    studentNamePlaceholder: "Full Name (e.g., Minh Charles, Leo Mercer)",
+    studentGradePlaceholder: "Initial Grade % (e.g., 90)",
+    studentStarsPlaceholder: "Bonus Stars (e.g., 5)",
+    saveBtn: "Enroll Student",
+    errorNameRequired: "Student name is required!",
+    avatarSelectLabel: "Select Class Emoji Representative"
   },
   vi: {
     // Core gateway
@@ -300,6 +310,16 @@ export const translations = {
     accessDeniedDesc: "Tài khoản Google đăng nhập hiện tại là Học sinh và không có quyền truy cập vào Bàn làm việc của Cô Nhung. Vui lòng đăng nhập tài khoản Giáo viên, nhập PIN hoặc quay về Góc học sinh.",
     notLoggedInTeacher: "Nhập trực tiếp mã PIN Cô Nhung để mở khóa nhanh, hoặc Đăng nhập Google:",
     orLabel: "— HOẶC —",
-    loginWithTeacherGoogleBtn: "Đăng nhập Google Giáo Viên"
+    loginWithTeacherGoogleBtn: "Đăng nhập Google Giáo Viên",
+
+    // Add Student Labels
+    addStudentBtn: "Thêm học sinh mới",
+    addStudentModalTitle: "Đăng Ký Học Sinh Mới Vào Lớp",
+    studentNamePlaceholder: "Họ và Tên (Ví dụ: Minh Khang, Bảo Vy)",
+    studentGradePlaceholder: "Điểm Số Ban Đầu % (Ví dụ: 90)",
+    studentStarsPlaceholder: "Số Sao Khởi Đầu (Ví dụ: 5)",
+    saveBtn: "Đăng ký Học sinh",
+    errorNameRequired: "Vui lòng nhập họ và tên học sinh!",
+    avatarSelectLabel: "Chọn Biểu Tượng Emoji Đại Diện"
   }
 };

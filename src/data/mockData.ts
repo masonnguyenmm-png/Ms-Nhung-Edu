@@ -14,7 +14,8 @@ export const initialStudents: Student[] = [
     stars: 120,
     status: 'Present',
     isPresent: true,
-    seatId: 'A1'
+    seatId: 'A1',
+    classId: 'Period 3: Biology'
   },
   {
     id: '2',
@@ -24,7 +25,8 @@ export const initialStudents: Student[] = [
     stars: 80,
     status: 'Participating',
     isPresent: true,
-    seatId: 'A2'
+    seatId: 'A2',
+    classId: 'Period 3: Biology'
   },
   {
     id: '3',
@@ -34,7 +36,8 @@ export const initialStudents: Student[] = [
     stars: 15,
     status: 'Absent',
     isPresent: false,
-    seatId: 'B1'
+    seatId: 'B1',
+    classId: 'Period 3: Biology'
   },
   {
     id: '4',
@@ -44,7 +47,8 @@ export const initialStudents: Student[] = [
     stars: 150,
     status: 'Present',
     isPresent: true,
-    seatId: 'B2'
+    seatId: 'B2',
+    classId: 'Period 3: Biology'
   },
   {
     id: '5',
@@ -55,7 +59,8 @@ export const initialStudents: Student[] = [
     status: 'Absent',
     isPresent: false,
     consecutiveAbsences: 3,
-    seatId: 'C1'
+    seatId: 'C1',
+    classId: 'Advanced Physics 301'
   },
   {
     id: '6',
@@ -65,7 +70,8 @@ export const initialStudents: Student[] = [
     stars: 45,
     status: 'Late',
     isPresent: true,
-    seatId: 'C2'
+    seatId: 'C2',
+    classId: 'Advanced Physics 301'
   },
   {
     id: '7',
@@ -75,7 +81,8 @@ export const initialStudents: Student[] = [
     stars: 420,
     status: 'Present',
     isPresent: true,
-    seatId: 'D1'
+    seatId: 'D1',
+    classId: 'Advanced Physics 301'
   },
   {
     id: '8',
@@ -85,7 +92,8 @@ export const initialStudents: Student[] = [
     stars: 385,
     status: 'Present',
     isPresent: true,
-    seatId: 'D2'
+    seatId: 'D2',
+    classId: 'Advanced Physics 301'
   },
   {
     id: '9',
@@ -95,7 +103,8 @@ export const initialStudents: Student[] = [
     stars: 230,
     status: 'Present',
     isPresent: true,
-    seatId: 'E1'
+    seatId: 'E1',
+    classId: 'Starfish 1A'
   },
   {
     id: '10',
@@ -105,7 +114,8 @@ export const initialStudents: Student[] = [
     stars: 250,
     status: 'Present',
     isPresent: true,
-    seatId: 'E2'
+    seatId: 'E2',
+    classId: 'Starfish 1A'
   },
   {
     id: '11',
@@ -115,7 +125,8 @@ export const initialStudents: Student[] = [
     stars: 42,
     status: 'Present',
     isPresent: true,
-    seatId: 'F1'
+    seatId: 'F1',
+    classId: 'Starfish 1A'
   },
   {
     id: '12',
@@ -125,7 +136,8 @@ export const initialStudents: Student[] = [
     stars: 55,
     status: 'Present',
     isPresent: true,
-    seatId: 'F2'
+    seatId: 'F2',
+    classId: 'Starfish 1A'
   }
 ];
 

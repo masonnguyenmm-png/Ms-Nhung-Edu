@@ -125,6 +125,18 @@ export async function updateStudentFields(studentId: string, updates: Partial<St
 }
 
 /**
+ * Adds a new Student record to Firestore class list
+ */
+export async function addNewStudentToClass(student: Student): Promise<void> {
+  const docRef = doc(db, 'students', student.id);
+  try {
+    await setDoc(docRef, student);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `students/${student.id}`);
+  }
+}
+
+/**
  * Deducts stars on Student's wallet during store purchases (Student owner-level)
  * Enforces strict self-decrementing security bounds
  */

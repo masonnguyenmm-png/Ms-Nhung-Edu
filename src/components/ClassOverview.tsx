@@ -27,7 +27,7 @@ import {
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import { Language } from '../translations';
+import { Language, translations } from '../translations';
 
 interface ClassOverviewProps {
   students: Student[];
@@ -39,6 +39,8 @@ interface ClassOverviewProps {
   onUpdateMemo?: (newMemo: string) => void;
   loveHearts?: number;
   onAddHeart?: () => void;
+  onAddStudent?: (studentData: { name: string; grade: number; stars: number; avatar: string; classId: string }) => Promise<void>;
+  selectedClass?: string;
 }
 
 export default function ClassOverview({
@@ -51,10 +53,25 @@ export default function ClassOverview({
   onUpdateMemo,
   loveHearts = 128,
   onAddHeart,
+  onAddStudent,
+  selectedClass = 'Period 3: Biology',
 }: ClassOverviewProps) {
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [classGoal, setClassGoal] = useState('Read 50 books collectively by Friday.');
   const [tempGoal, setTempGoal] = useState(classGoal);
+
+  // States for student enrollment
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [newStudentName, setNewStudentName] = useState('');
+  const [newStudentGrade, setNewStudentGrade] = useState(90);
+  const [newStudentStars, setNewStudentStars] = useState(10);
+  const [newStudentAvatar, setNewStudentAvatar] = useState('👩‍🎓');
+  const [addStudentClass, setAddStudentClass] = useState(selectedClass);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  const t = (key: keyof typeof translations['en']) => {
+    return translations[lang]?.[key] || translations['en']?.[key] || key;
+  };
 
   // States for Ms Nhung's interactive message corner
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
@@ -348,13 +365,30 @@ export default function ClassOverview({
                 <Award className="w-5 h-5 text-amber-500 fill-amber-500/10" />
                 <span>Classroom Honor Roll</span>
               </h3>
-              <button 
-                onClick={() => onNavigateToTab('dashboard')}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-0.5"
-              >
-                <span>Reward Classroom</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => {
+                    setNewStudentName('');
+                    setNewStudentGrade(90);
+                    setNewStudentStars(10);
+                    setNewStudentAvatar('👩‍🎓');
+                    setAddStudentClass(selectedClass);
+                    setModalError(null);
+                    setShowAddStudentModal(true);
+                  }}
+                  className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/50 px-3 py-1.5 rounded-xl flex items-center gap-1 font-bold transition-all active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{t('addStudentBtn')}</span>
+                </button>
+                <button 
+                  onClick={() => onNavigateToTab('dashboard')}
+                  className="text-xs font-bold text-zinc-500 hover:text-emerald-700 hover:underline flex items-center gap-0.5"
+                >
+                  <span>Reward</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -553,6 +587,157 @@ export default function ClassOverview({
                   className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
                 >
                   Apply Goal
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Student Enrollment Popup Modal */}
+      <AnimatePresence>
+        {showAddStudentModal && (
+          <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="bg-white max-w-sm w-full rounded-2xl p-6 border border-zinc-200 shadow-2xl space-y-5 relative text-left text-zinc-805"
+            >
+              <div className="flex items-center gap-3 border-b border-zinc-100 pb-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-750 flex items-center justify-center font-bold text-lg shadow-inner">
+                  ➕
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-zinc-800 tracking-tight">{t('addStudentModalTitle')}</h3>
+                  <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">{lang === 'en' ? 'School Registry' : 'Đồng bộ Học bạ'}</p>
+                </div>
+              </div>
+
+              {modalError && (
+                <div className="bg-rose-50 border border-rose-100/60 text-rose-700 px-3 py-2 rounded-xl text-xs font-bold leading-relaxed">
+                  ⚠️ {modalError}
+                </div>
+              )}
+
+              <div className="space-y-3.5">
+                {/* Name */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block">
+                    {lang === 'en' ? 'STUDENT FULL NAME' : 'HỌ VÀ TÊN HỌC SINH'}
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudentName}
+                    onChange={(e) => {
+                      setNewStudentName(e.target.value);
+                      setModalError(null);
+                    }}
+                    placeholder={t('studentNamePlaceholder')}
+                    className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-emerald-600 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-all font-medium text-zinc-850"
+                    autoFocus
+                  />
+                </div>
+
+                {/* School Classroom Selection Selector */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block">
+                    {lang === 'en' ? 'ASSIGN TO CLASSROOM' : 'ĐĂNG KÝ VÀO LỚP HỌC'}
+                  </label>
+                  <select
+                    value={addStudentClass}
+                    onChange={(e) => setAddStudentClass(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-emerald-600 rounded-xl text-xs font-bold text-zinc-800 focus:outline-none transition-all cursor-pointer"
+                  >
+                    {['Period 3: Biology', 'Advanced Physics 301', 'Starfish 1A'].map((clsName) => (
+                      <option key={clsName} value={clsName}>
+                        {clsName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Initial Grade & Starting Stars */}
+                <div className="grid grid-cols-2 gap-35">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block">
+                      {lang === 'en' ? 'INITIAL GRADE %' : 'ĐIỂM SỐ BAN ĐẦU %'}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={newStudentGrade}
+                      onChange={(e) => setNewStudentGrade(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                      className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 focus:border-emerald-600 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-all font-mono font-bold text-zinc-850"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block">
+                      {lang === 'en' ? 'STARTING STARS' : 'SỐ SAO KHỞI ĐẦU'}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      value={newStudentStars}
+                      onChange={(e) => setNewStudentStars(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                      className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 focus:border-emerald-600 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-all font-mono font-bold text-zinc-850"
+                    />
+                  </div>
+                </div>
+
+                {/* Avatar select */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block">
+                    {t('avatarSelectLabel')}
+                  </label>
+                  <div className="grid grid-cols-6 gap-1.5 p-2 bg-zinc-50 rounded-xl border border-zinc-150 max-h-[85px] overflow-y-auto">
+                    {['👩‍🎓', '👨‍🎓', '🦁', '🦉', '🦊', '🐼', '🎨', '🚀', '🎸', '⚽', '🦄', '🐳', '🍀', '🍎', '🧩', '🧸', '🌟', '💖'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setNewStudentAvatar(emoji)}
+                        className={`w-8 h-8 text-base rounded-lg flex items-center justify-center transition-all ${
+                          newStudentAvatar === emoji
+                            ? 'bg-emerald-600 text-white scale-105 shadow-sm'
+                            : 'bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200/80'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-zinc-100">
+                <button
+                  onClick={() => setShowAddStudentModal(false)}
+                  className="px-3.5 py-1.5 border border-zinc-200 hover:bg-zinc-50 rounded-xl text-xs font-bold text-zinc-500 transition-colors"
+                >
+                  {lang === 'en' ? 'Cancel' : 'Hủy bỏ'}
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!newStudentName.trim()) {
+                      setModalError(t('errorNameRequired'));
+                      return;
+                    }
+                    if (onAddStudent) {
+                      await onAddStudent({
+                        name: newStudentName.trim(),
+                        grade: newStudentGrade,
+                        stars: newStudentStars,
+                        avatar: newStudentAvatar,
+                        classId: addStudentClass
+                      });
+                    }
+                    setShowAddStudentModal(false);
+                  }}
+                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                >
+                  {t('saveBtn')}
                 </button>
               </div>
             </motion.div>

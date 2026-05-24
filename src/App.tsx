@@ -35,6 +35,7 @@ import {
   updateStudentFields,
   purchaseRewardStoreItem,
   updateDiaryPostHomework,
+  addNewStudentToClass,
 } from './dbService';
 import { doc, setDoc, getDocFromServer } from 'firebase/firestore';
 import {
@@ -285,6 +286,39 @@ export default function App() {
     }
   };
 
+  const handleAddNewStudent = async (studentData: { name: string; grade: number; stars: number; avatar: string; classId?: string }) => {
+    try {
+      const maxIdNum = students.reduce((max, s) => {
+        const idVal = parseInt(s.id, 10);
+        return isNaN(idVal) ? max : Math.max(max, idVal);
+      }, 0);
+      const nextId = (maxIdNum + 1).toString();
+
+      const newStudent: Student = {
+        id: nextId,
+        name: studentData.name,
+        avatar: studentData.avatar || "👩‍🎓",
+        grade: studentData.grade,
+        stars: studentData.stars,
+        status: 'Present',
+        isPresent: true,
+        seatId: null,
+        classId: studentData.classId || selectedClass
+      };
+
+      setStudents(prev => {
+        const hasMatch = prev.some(s => s.id === nextId);
+        if (hasMatch) return prev;
+        const combined = [...prev, newStudent];
+        return combined.sort((a, b) => a.id.localeCompare(b.id));
+      });
+
+      await addNewStudentToClass(newStudent);
+    } catch (e) {
+      console.error('Error adding new student:', e);
+    }
+  };
+
   // Star purchase deduction - uses strict secure self-decrementing update
   const handlePurchaseReward = async (cost: number, rewardTitle: string) => {
     if (!currentStudent || currentStudent.id === 'none') {
@@ -501,6 +535,8 @@ export default function App() {
       </div>
     );
   }
+
+  const classStudents = students.filter(s => !s.classId || s.classId === selectedClass);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background font-sans antialiased text-on-background">
@@ -845,7 +881,7 @@ export default function App() {
               {/* Conditional view routers */}
               {activeTab === 'overview' && (
                 <ClassOverview
-                  students={students}
+                  students={classStudents}
                   diaryPosts={diaryPosts}
                   onNavigateToTab={(tabName) => {
                     if (tabName === 'student-portal' || tabName === 'tuition') {
@@ -861,12 +897,14 @@ export default function App() {
                   onUpdateMemo={handleUpdateMemo}
                   loveHearts={loveHearts}
                   onAddHeart={handleAddHeart}
+                  onAddStudent={handleAddNewStudent}
+                  selectedClass={selectedClass}
                 />
               )}
 
               {activeTab === 'dashboard' && role === 'instructor' && (
                 <ClassroomLayout
-                  students={students}
+                  students={classStudents}
                   onAwardStars={handleAwardStars}
                   onAwardAll={handleLevelAllStars}
                 />
@@ -874,7 +912,7 @@ export default function App() {
 
               {activeTab === 'attendance' && role === 'instructor' && (
                 <AttendanceManager
-                  students={students}
+                  students={classStudents}
                   onUpdateStatus={handleUpdateStatus}
                   lang={lang}
                 />
@@ -882,13 +920,13 @@ export default function App() {
 
               {activeTab === 'reports' && role === 'instructor' && (
                 <ReportsAnalytics
-                  students={students}
+                  students={classStudents}
                 />
               )}
 
               {activeTab === 'rewards' && (
                 <RewardStore
-                  students={students}
+                  students={classStudents}
                   rewards={rewards}
                   studentWallet={currentStudent}
                   onPurchaseReward={handlePurchaseReward}
