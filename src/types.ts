@@ -3,6 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export interface Classroom {
+  id: string;
+  name: string;
+  room: string;
+  instructor: string;
+}
+
 export type StudentStatus = 'Present' | 'Absent' | 'Late' | 'Excused' | 'Participating';
 
 export interface Student {

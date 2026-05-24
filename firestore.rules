@@ -30,6 +30,15 @@ service cloud.firestore {
 
     // --- Validation Helper Primitives ---
 
+    function isValidClassroom(cls) {
+      return cls.id is string && cls.id.size() <= 128 &&
+             cls.name is string && cls.name.size() > 0 && cls.name.size() <= 100 &&
+             cls.room is string && cls.room.size() <= 50 &&
+             cls.instructor is string && cls.instructor.size() <= 100 &&
+             cls.keys().hasAll(['id', 'name', 'room', 'instructor']) &&
+             cls.keys().size() <= 6;
+    }
+
     function isValidStudent(student) {
       return student.id is string && student.id.size() <= 128 &&
              student.name is string && student.name.size() > 0 && student.name.size() <= 100 &&
@@ -85,6 +94,13 @@ service cloud.firestore {
     match /admins/{adminId} {
       allow read: if isSignedIn();
       allow write: if false; // System bootstrapped or manually managed only
+    }
+
+    // 1.5. CLASSROOMS COLLECTION
+    match /classrooms/{classroomId} {
+      allow list, get: if true;
+      allow create, delete: if isAdmin() && isValidId(classroomId) && isValidClassroom(incoming());
+      allow update: if isAdmin() && isValidId(classroomId) && isValidClassroom(incoming());
     }
 
     // 2. STUDENTS COLLECTION

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Student, RewardItem, Invoice, DiaryPost } from '../types';
+import { Classroom, Student, RewardItem, Invoice, DiaryPost } from '../types';
 
 export const initialStudents: Student[] = [
   {

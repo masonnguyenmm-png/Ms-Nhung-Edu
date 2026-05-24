@@ -1,5 +1,29 @@
 {
   "entities": {
+    "Classroom": {
+      "title": "Classroom",
+      "description": "Represents a physical or virtual classroom homeroom group with assigned students, schedule, and room reference.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the classroom (slug or code)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or subject code of the classroom."
+        },
+        "room": {
+          "type": "string",
+          "description": "Room identifier number or location label."
+        },
+        "instructor": {
+          "type": "string",
+          "description": "The name of the leading teacher or instructor."
+        }
+      },
+      "required": ["id", "name", "room", "instructor"]
+    },
     "Student": {
       "title": "Student",
       "description": "Represents a student enrolled in the classroom, their grades, status, seating layout, and accumulated reward stars.",
@@ -165,6 +189,12 @@
     }
   },
   "firestore": {
+    "/classrooms/{classroomId}": {
+      "schema": {
+        "$ref": "#/entities/Classroom"
+      },
+      "description": "Collection storing different classroom subjects and groups."
+    },
     "/students/{studentId}": {
       "schema": {
         "$ref": "#/entities/Student"
