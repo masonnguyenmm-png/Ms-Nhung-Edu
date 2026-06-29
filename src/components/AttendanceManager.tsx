@@ -50,7 +50,7 @@ export default function AttendanceManager({
   return (
     <div className="space-y-6">
       {/* Header Panel */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 fade-in-up">
         <div>
           <p className="text-xs uppercase tracking-widest text-[#006b47] font-extrabold flex items-center gap-1">
             <UserCheck className="w-3.5 h-3.5" />
@@ -64,11 +64,11 @@ export default function AttendanceManager({
 
         {/* Global Action items */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-zinc-700 border border-zinc-200 text-xs font-bold leading-none">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-zinc-700 border border-zinc-200 text-xs font-bold leading-none hover-lift">
             <Calendar className="w-3.5 h-3.5 text-emerald-600" />
             <span>{lang === 'en' ? 'Friday, May 23, 2026' : 'Thứ Sáu, 23 tháng 5, 2026'}</span>
           </div>
-          <button className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-full text-xs shadow-lg shadow-emerald-700/10 active:scale-95 transition-all">
+          <button className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-full text-xs shadow-lg shadow-emerald-700/10 active:scale-95 transition-all hover-lift pulse-glow">
             {t('submitDaily')}
           </button>
         </div>
@@ -76,25 +76,25 @@ export default function AttendanceManager({
 
       {/* Summary Metrics bento block */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-zinc-200/50 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow">
+        <div className="bg-white border border-zinc-200/50 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow hover-lift">
           <div className="absolute right-0 top-0 w-12 h-12 bg-emerald-500/5 rounded-bl-full pointer-events-none" />
           <span className="text-4xl font-black text-emerald-600 tracking-tight">{totalPresent}</span>
           <span className="text-[10.5px] font-bold text-zinc-400 uppercase tracking-widest mt-2">{t('present')}</span>
         </div>
 
-        <div className="bg-white border border-zinc-200/50 border-l-4 border-l-rose-500 rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow">
+        <div className="bg-white border border-zinc-200/50 border-l-4 border-l-rose-500 rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow hover-lift">
           <div className="absolute right-0 top-0 w-12 h-12 bg-rose-500/5 rounded-bl-full pointer-events-none" />
           <span className="text-4xl font-black text-rose-500 tracking-tight">{totalAbsent}</span>
           <span className="text-[10.5px] font-bold text-zinc-400 uppercase tracking-widest mt-2">{t('absent')}</span>
         </div>
 
-        <div className="bg-white border border-zinc-200/50 border-l-4 border-l-amber-500 rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow">
+        <div className="bg-white border border-zinc-200/50 border-l-4 border-l-amber-500 rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow hover-lift">
           <div className="absolute right-0 top-0 w-12 h-12 bg-amber-500/5 rounded-bl-full pointer-events-none" />
           <span className="text-4xl font-black text-amber-500 tracking-tight">{totalLate}</span>
           <span className="text-[10.5px] font-bold text-zinc-400 uppercase tracking-widest mt-2">{t('late')}</span>
         </div>
 
-        <div className="bg-white border border-zinc-200/50 border-l-4 border-l-indigo-500 rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow">
+        <div className="bg-white border border-zinc-200/50 border-l-4 border-l-indigo-500 rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden premium-shadow hover-lift">
           <div className="absolute right-0 top-0 w-12 h-12 bg-indigo-500/5 rounded-bl-full pointer-events-none" />
           <span className="text-4xl font-black text-indigo-500 tracking-tight">{totalExcused}</span>
           <span className="text-[10.5px] font-bold text-zinc-400 uppercase tracking-widest mt-2">{t('excused')}</span>
@@ -118,20 +118,20 @@ export default function AttendanceManager({
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 select-none no-scrollbar">
           <button
             onClick={() => setActiveFilter('All')}
-            className={`px-4.5 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all duration-200 ${
+            className={`px-4.5 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all duration-200 hover-lift ${
               activeFilter === 'All'
-                ? 'bg-emerald-50 text-emerald-705 border border-emerald-200'
+                ? 'bg-emerald-50 text-emerald-705 border border-emerald-200 pulse-glow'
                 : 'bg-zinc-100 hover:bg-zinc-200/70 border border-transparent text-zinc-500'
             }`}
           >
             {t('allStudents')} ({students.length})
           </button>
-          
+
           <button
             onClick={() => setActiveFilter('At Risk')}
-            className={`px-4.5 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all duration-200 ${
+            className={`px-4.5 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all duration-200 hover-lift ${
               activeFilter === 'At Risk'
-                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                ? 'bg-rose-50 text-rose-700 border border-rose-200 pulse-glow'
                 : 'bg-zinc-100 hover:bg-zinc-200/70 border border-transparent text-zinc-500'
             }`}
           >

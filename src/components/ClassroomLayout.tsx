@@ -47,7 +47,7 @@ export default function ClassroomLayout({
   return (
     <div className="space-y-6">
       {/* Header and Core Context Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 fade-in-up">
         <div>
           <p className="text-xs uppercase tracking-widest text-emerald-700 font-extrabold flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 animate-pulse text-amber-500" />
@@ -76,7 +76,7 @@ export default function ClassroomLayout({
           <button
             onClick={handleRandomizeSelect}
             disabled={isShuffling}
-            className="flex items-center gap-1.5 px-4.5 py-2 bg-white text-zinc-700 rounded-full font-bold text-xs hover:bg-zinc-50 hover:text-zinc-900 active:scale-95 duration-200 transition-all border border-zinc-200 disabled:opacity-55"
+            className="flex items-center gap-1.5 px-4.5 py-2 bg-white text-zinc-700 rounded-full font-bold text-xs hover:bg-zinc-50 hover:text-zinc-900 active:scale-95 duration-200 transition-all border border-zinc-200 disabled:opacity-55 hover-lift"
           >
             <Shuffle className={`w-3.5 h-3.5 text-emerald-600 ${isShuffling ? 'animate-spin' : ''}`} />
             <span>Random Draw</span>
@@ -84,7 +84,7 @@ export default function ClassroomLayout({
 
           <button
             onClick={() => onAwardAll(5)}
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 text-white rounded-full font-bold text-xs hover:bg-emerald-800 transition-all active:scale-95 shadow-lg shadow-emerald-700/10"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 text-white rounded-full font-bold text-xs hover:bg-emerald-800 transition-all active:scale-95 shadow-lg shadow-emerald-700/10 hover-lift pulse-glow"
           >
             <Award className="w-4 h-4" />
             <span>Award All (+5 ★)</span>
@@ -125,7 +125,7 @@ export default function ClassroomLayout({
                       : '0 4px 15px -10px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: 'spring', stiffness: 350, damping: 22 }}
-                  className={`bg-white/95 backdrop-blur-md rounded-2xl p-4 border relative group transition-all duration-300 premium-shadow hover:translate-y-[-2px] holo-card ${
+                  className={`bg-white/95 backdrop-blur-md rounded-2xl p-4 border relative group transition-all duration-300 premium-shadow hover:translate-y-[-2px] holo-card hover-lift ${
                     isAbsent ? 'opacity-55 grayscale-[20%]' : ''
                   }`}
                 >

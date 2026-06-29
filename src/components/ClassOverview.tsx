@@ -24,8 +24,6 @@ import {
   Star,
   Heart
 } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../firebase';
 
 import { Language } from '../translations';
 
@@ -97,10 +95,11 @@ export default function ClassOverview({
   return (
     <div className="space-y-8 select-text">
       {/* Dynamic Announcement Banner with High-End Glass Backdrops */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#005e3a] via-[#006b47] to-[#004d33] text-white p-6 md:p-8 shadow-xl">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#005e3a] via-[#006b47] to-[#004d33] text-white p-6 md:p-8 shadow-xl hover-lift">
         {/* Abstract organic background shapes */}
-        <div className="absolute -right-10 -top-10 w-48 h-48 bg-emerald-400/10 rounded-full blur-3xl" />
-        <div className="absolute right-1/4 bottom-0 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl animate-pulse" />
+        <div className="absolute -right-10 -top-10 w-48 h-48 bg-emerald-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute right-1/4 bottom-0 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute left-1/4 top-1/2 w-24 h-24 bg-rose-400/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '0.5s' }} />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-4 max-w-2xl">
@@ -108,8 +107,8 @@ export default function ClassOverview({
               <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
               {lang === 'en' ? 'Active Classroom Homeroom' : 'Lớp Học Chủ Nhiệm Hoạt Động'}
             </span>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight animate-fade-in">
-              {lang === 'en' ? "Welcome to Ms Nhung's Classroom" : "Chào mừng đến Lớp của Cô Nhung"} <span className="inline-block hover:scale-125 transition-transform duration-200 cursor-pointer">✨</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight fade-in-up">
+              {lang === 'en' ? "Welcome to Ms Nhung's Classroom" : "Chào mừng đến Lớp của Cô Nhung"} <span className="inline-block hover:scale-125 transition-transform duration-200 cursor-pointer animate-bounce">✨</span>
             </h1>
             <p className="text-sm md:text-base text-emerald-100/90 leading-relaxed font-normal">
               {lang === 'en' 

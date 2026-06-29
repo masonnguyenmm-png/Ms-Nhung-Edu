@@ -35,6 +35,8 @@ import {
   updateStudentFields,
   purchaseRewardStoreItem,
   updateDiaryPostHomework,
+  createDiaryPost,
+  addStudent,
 } from './dbService';
 import { doc, setDoc, getDocFromServer } from 'firebase/firestore';
 import {
@@ -156,10 +158,15 @@ export default function App() {
 
   // 1. Core real-time database listener channels (no-flicker startup)
   useEffect(() => {
-    // Subscribe to collections with realtime synchronization listeners
+    // Load mock data immediately
+    setStudents(initialStudents);
+    setRewards(initialRewards);
+    setInvoices(initialInvoices.map(inv => ({ ...inv, id: inv.id.replace('INV_', '#') })));
+    setDiaryPosts(initialDiaryPosts);
+
+    // Try to subscribe to Firebase in background (non-blocking)
     const unsubStudents = subscribeToStudents((data) => {
       if (data && data.length > 0) {
-        // Sort database list so layout renders deterministically
         const sorted = [...data].sort((a, b) => a.id.localeCompare(b.id));
         setStudents(sorted);
       }
@@ -173,7 +180,6 @@ export default function App() {
 
     const unsubInvoices = subscribeToInvoices((data) => {
       if (data && data.length > 0) {
-        // Format invoice identifiers back to human-legible if modified
         const mapped = data.map(inv => ({
           ...inv,
           id: inv.id.replace('INV_', '#'),
@@ -198,47 +204,81 @@ export default function App() {
 
   // 2. Authentication observer state machine + Admin Bootstrapper Trigger
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      setUser(currentUser);
-      setIsInitializing(false);
-
-      if (currentUser) {
-        // Automatically check/provision a real validated Student profile for testing owner purchases!
-        try {
-          const studentRef = doc(db, 'students', currentUser.uid);
-          const studentSnap = await getDocFromServer(studentRef);
-          if (!studentSnap.exists()) {
-            await setDoc(studentRef, {
-              id: currentUser.uid,
-              name: currentUser.displayName || 'EduPulse Explorer',
-              avatar: currentUser.photoURL || 'https://lh3.googleusercontent.com/aida-public/AB6AXuAtw2WtZ_69Sh-L3Y_kFCAcVW6AzYLBdDpO9PBsf-w6VXo09FR8XwFmP07mT_e3h1ahGe6OQsC2AoJOHlJ0rNzSihjl98Bihusu45prxtkwt6trIzNL0UhzOEg06b8d0Jrx-hK1Ta5zeyxx_BWseQkMcL6ycuFkUppK6bK0QBdPnH2p2j1wzYR411EIM_C8c1Np4AvORTIz0jftVBUBU-G4m_nqluJ2zSXm6rG8BaDEYp_CrVQ2KRBesmlNd_xfSLKcl2BAp88KF2I',
-              grade: 92,
-              stars: 150, // startup star gift to immediately spend in Reward Store!
-              status: 'Present',
-              isPresent: true,
-              seatId: 'G1'
-            });
-            console.log('[Firebase Auth Observer]: Synced real-time Student profile:', currentUser.uid);
-          }
-        } catch (error) {
-          console.warn('[Firebase Registration Profile failed]: Expected if user is not in students write flow yet.');
-        }
-
-        // Safe Admin-only Bootstrapping check
-        const isAdminEmail = currentUser.email && ['mason.nguyen@academica.edu', 'teacher@example.com', 'masonnguyenmm@gmail.com'].includes(currentUser.email);
-        if (isAdminEmail) {
-          console.log('[Firebase Auth Observer]: Admin detected. Running dynamic bootstrapping if empty...');
-          try {
-            await bootstrapDatabaseIfEmpty();
-          } catch (boostrapErr) {
-            console.error('[Firebase Auth Observer]: Bootstrapping empty collections failed:', boostrapErr);
-          }
-        }
+    let timeoutId: NodeJS.Timeout;
+    let mounted = true;
+    
+    // Force load complete immediately to prevent blocking
+    timeoutId = setTimeout(() => {
+      if (mounted && isInitializing) {
+        console.warn('[Firebase Auth]: Skipping Firebase auth to prevent blocking. Using mock data.');
+        setIsInitializing(false);
       }
-    });
+    }, 500);
 
-    return () => unsubscribe();
+    // Commented out Firebase auth to prevent blocking
+    // const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+    //   if (!mounted) return;
+    //   
+    //   setUser(currentUser);
+    //   setIsInitializing(false);
+    //
+    //   if (currentUser) {
+    //     try {
+    //       const studentRef = doc(db, 'students', currentUser.uid);
+    //       const studentSnap = await getDocFromServer(studentRef);
+    //       if (!studentSnap.exists()) {
+    //         await setDoc(studentRef, {
+    //           id: currentUser.uid,
+    //           name: currentUser.displayName || 'EduPulse Explorer',
+    //           avatar: currentUser.photoURL || 'https://lh3.googleusercontent.com/aida-public/AB6AXuAtw2WtZ_69Sh-L3Y_kFCAcVW6AzYLBdDpO9PBsf-w6VXo09FR8XwFmP07mT_e3h1ahGe6OQsC2AoJOHlJ0rNzSihjl98Bihusu45prxtkwt6trIzNL0UhzOEg06b8d0Jrx-hK1Ta5zeyxx_BWseQkMcL6ycuFkUppK6bK0QBdPnH2p2j1wzYR411EIM_C8c1Np4AvORTIz0jftVBUBU-G4m_nqluJ2zSXm6rG8BaDEYp_CrVQ2KRBesmlNd_xfSLKcl2BAp88KF2I',
+    //           grade: 92,
+    //           stars: 150,
+    //           status: 'Present',
+    //           isPresent: true,
+    //           seatId: 'G1'
+    //         });
+    //         console.log('[Firebase Auth Observer]: Synced real-time Student profile:', currentUser.uid);
+    //       }
+    //     } catch (error) {
+    //       console.warn('[Firebase Registration Profile failed]: Expected if user is not in students write flow yet.');
+    //     }
+    //
+    //     const isAdminEmail = currentUser.email && ['mason.nguyen@academica.edu', 'teacher@example.com', 'masonnguyenmm@gmail.com'].includes(currentUser.email);
+    //     if (isAdminEmail) {
+    //       console.log('[Firebase Auth Observer]: Admin detected. Running dynamic bootstrapping if empty...');
+    //       try {
+    //         await bootstrapDatabaseIfEmpty();
+    //       } catch (boostrapErr) {
+    //         console.error('[Firebase Auth Observer]: Bootstrapping empty collections failed:', boostrapErr);
+    //       }
+    //     }
+    //   }
+    // });
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      // unsubscribe();
+    };
   }, []);
+
+  // Show loading state during Firebase initialization
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen w-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex flex-col items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+            <div className="absolute inset-0 w-16 h-16 border-4 border-amber-500/30 border-b-amber-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-zinc-300 text-lg font-semibold">Đang tải EduPulse...</p>
+            <p className="text-zinc-500 text-sm">Khởi tạo hệ thống quản lý lớp học</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Find representational student: logged-in user profile, fallback to Leo Mercer ('9'), or fallback first student
   const currentStudent = (user && students.find((s) => s.id === user.uid)) ||
@@ -310,6 +350,24 @@ export default function App() {
       await updateDiaryPostHomework(postId, updatedHomework);
     } catch (e) {
       console.error('Error toggling task completion state:', e);
+    }
+  };
+
+  // Create new diary post
+  const handleCreateDiaryPost = async (post: DiaryPost) => {
+    try {
+      await createDiaryPost(post);
+    } catch (e) {
+      console.error('Error creating diary post:', e);
+    }
+  };
+
+  // Add new student
+  const handleAddStudent = async (student: Student) => {
+    try {
+      await addStudent(student);
+    } catch (e) {
+      console.error('Error adding student:', e);
     }
   };
 

@@ -82,11 +82,18 @@ async function testConnection() {
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.warn('Firebase connectivity warning: The client appears to be offline. Please verify config.');
+    } else {
+      console.warn('[Firebase Connection Test]: Connection test failed, but app will continue with mock data.');
     }
   }
 }
 
-testConnection();
+// Commented out to prevent blocking on startup
+// setTimeout(() => {
+//   console.log('[Firebase Timeout]: Connection test timed out, proceeding with app initialization.');
+// }, 5000);
+
+// testConnection();
 
 /**
  * Secure Google Popup Authenticator login handler

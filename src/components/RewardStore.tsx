@@ -89,10 +89,10 @@ export default function RewardStore({
       </AnimatePresence>
 
       {/* Hero Header wallet card with premium emerald/amber styling */}
-      <section className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#005e3a] via-[#006b47] to-[#004d33] p-6 md:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <section className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#005e3a] via-[#006b47] to-[#004d33] p-6 md:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 hover-lift">
         {/* Lights */}
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-60 h-60 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-400/5 rounded-full blur-2xl pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
 
         <div className="relative z-10 text-center md:text-left space-y-2">
           <p className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10.5px] font-bold uppercase tracking-wider text-emerald-200 border border-white/10">
@@ -125,12 +125,12 @@ export default function RewardStore({
         {/* Rewards grid area (Span 8) */}
         <div className="xl:col-span-8 space-y-6">
           {/* Quick Price categorizations filters */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 select-none no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 select-none no-scrollbar fade-in-up">
             <button
               onClick={() => setFilterPrice('All')}
-              className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
+              className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 hover-lift ${
                 filterPrice === 'All'
-                  ? 'bg-emerald-700 text-white border border-transparent shadow-sm'
+                  ? 'bg-emerald-700 text-white border border-transparent shadow-sm pulse-glow'
                   : 'bg-zinc-100 hover:bg-zinc-200/70 text-zinc-500 border border-zinc-200/20'
               }`}
             >
@@ -138,9 +138,9 @@ export default function RewardStore({
             </button>
             <button
               onClick={() => setFilterPrice('Under50')}
-              className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
+              className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all duration-200 hover-lift ${
                 filterPrice === 'Under50'
-                  ? 'bg-emerald-700 text-white border border-transparent shadow-sm'
+                  ? 'bg-emerald-700 text-white border border-transparent shadow-sm pulse-glow'
                   : 'bg-zinc-100 hover:bg-zinc-200/70 text-zinc-500 border border-zinc-200/20'
               }`}
             >

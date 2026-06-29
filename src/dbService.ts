@@ -212,3 +212,27 @@ export async function updateDiaryPostHomework(postId: string, homeworkList: Diar
     handleFirestoreError(error, OperationType.WRITE, `diaryPosts/${postId}`);
   }
 }
+
+/**
+ * Creates a new diary post in the database
+ */
+export async function createDiaryPost(post: DiaryPost): Promise<void> {
+  const colRef = collection(db, 'diaryPosts');
+  try {
+    await setDoc(doc(db, 'diaryPosts', post.id), post);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'diaryPosts');
+  }
+}
+
+/**
+ * Adds a new student to the database
+ */
+export async function addStudent(student: Student): Promise<void> {
+  const docRef = doc(db, 'students', student.id);
+  try {
+    await setDoc(docRef, student);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, `students/${student.id}`);
+  }
+}
